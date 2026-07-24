@@ -58,8 +58,8 @@ const COMPETITIONS = [
 const WEEKLY_LIMITED_COMPETITIONS = new Set(["ligue1", "liga", "serieA", "premierLeague"]);
 
 const POINTS = {
-  exact: 3,
-  outcome: 1,
+  exact: 5,
+  outcome: 3,
   wrong: 0
 };
 
