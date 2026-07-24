@@ -1,116 +1,153 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
+  onAuthStateChanged,
   GoogleAuthProvider,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import {
   getFirestore,
   collection,
   doc,
-  setDoc,
   getDoc,
   getDocs,
-  onSnapshot,
+  setDoc,
+  addDoc,
   updateDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+  deleteDoc,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+/* =========================================================
+   CONFIG FIREBASE
+   ========================================================= */
 const firebaseConfig = {
-  apiKey: "REMPLACE_PAR_TA_CLE",
-  authDomain: "REMPLACE_PAR_TON_PROJET.firebaseapp.com",
-  projectId: "REMPLACE_PAR_TON_PROJET",
-  storageBucket: "REMPLACE_PAR_TON_PROJET.appspot.com",
-  messagingSenderId: "REMPLACE_PAR_ID",
-  appId: "REMPLACE_PAR_APP_ID"
+  apiKey: "REPLACE_ME",
+  authDomain: "REPLACE_ME",
+  projectId: "REPLACE_ME",
+  storageBucket: "REPLACE_ME",
+  messagingSenderId: "REPLACE_ME",
+  appId: "REPLACE_ME"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+const googleProvider = new GoogleAuthProvider();
 
-const COMPETITIONS = {
-  ligue1: { label: "Ligue 1", singleWeekly: true },
-  liga: { label: "Liga", singleWeekly: true },
-  serieA: { label: "Serie A", singleWeekly: true },
-  premierLeague: { label: "Premier League", singleWeekly: true },
-  ldc: { label: "Ligue des Champions", singleWeekly: false }
-};
+/* =========================================================
+   CONSTANTES
+   ========================================================= */
+const COMPETITIONS = [
+  { id: "ligue1", label: "Ligue 1" },
+  { id: "liga", label: "Liga" },
+  { id: "serieA", label: "Serie A" },
+  { id: "premierLeague", label: "Premier League" },
+  { id: "ldc", label: "Ligue des Champions" }
+];
 
-const VIEWS = {
-  general: "Classement général",
-  ligue1: "Ligue 1",
-  liga: "Liga",
-  serieA: "Serie A",
-  premierLeague: "Premier League",
-  ldc: "Ligue des Champions",
-  evolution: "Évolution",
-  admin: "Admin"
+const WEEKLY_LIMITED_COMPETITIONS = new Set(["ligue1", "liga", "serieA", "premierLeague"]);
+
+const POINTS = {
+  exact: 3,
+  outcome: 1,
+  wrong: 0
 };
 
 const state = {
   currentUser: null,
+  userProfile: null,
   users: [],
   matches: [],
   predictions: [],
-  isAdmin: false,
-  activeView: "general",
-  theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
-  chart: null
+  rankings: {
+    general: [],
+    byCompetition: {
+      ligue1: [],
+      liga: [],
+      serieA: [],
+      premierLeague: [],
+      ldc: []
+    }
+  },
+  evolution: [],
+  chart: null,
+  currentView: "general"
 };
 
-const pageTitle = document.getElementById("page-title");
-const authStatus = document.getElementById("auth-status");
-const loginBtn = document.getElementById("login-btn");
-const logoutBtn = document.getElementById("logout-btn");
-const liveStatus = document.getElementById("live-status");
+/* =========================================================
+   DOM
+   ========================================================= */
+const $ = (id) => document.getElementById(id);
 
-const emailAuthForm = document.getElementById("email-auth-form");
-const authEmail = document.getElementById("auth-email");
-const authPassword = document.getElementById("auth-password");
-const signupBtn = document.getElementById("signup-btn");
-const signinBtn = document.getElementById("signin-btn");
-const emailAuthFeedback = document.getElementById("email-auth-feedback");
+const dom = {
+  pageTitle: $("page-title"),
+  syncStatus: $("sync-status"),
+  authStatus: $("auth-status"),
+  authLoggedOut: $("auth-logged-out"),
+  authLoggedIn: $("auth-logged-in"),
+  btnGoogleLogin: $("btn-google-login"),
+  btnOpenAuth: $("btn-open-auth"),
+  btnLogout: $("btn-logout"),
+  authDialog: $("auth-dialog"),
+  authEmail: $("auth-email"),
+  authPassword: $("auth-password"),
+  btnEmailLogin: $("btn-email-login"),
+  btnEmailSignup: $("btn-email-signup"),
+  themeToggle: $("theme-toggle"),
 
-const generalRankingBody = document.getElementById("general-ranking-body");
-const generalTotalPlayers = document.getElementById("general-total-players");
-const generalTotalMatches = document.getElementById("general-total-matches");
+  statTotalUsers: $("stat-total-users"),
+  statTotalFinished: $("stat-total-finished"),
+  statMyRank: $("stat-my-rank"),
+  statMyPoints: $("stat-my-points"),
 
-const competitionMatchContainers = {
-  ligue1: document.getElementById("ligue1-matches"),
-  liga: document.getElementById("liga-matches"),
-  serieA: document.getElementById("serieA-matches"),
-  premierLeague: document.getElementById("premierLeague-matches"),
-  ldc: document.getElementById("ldc-matches")
+  rankingGeneralBody: $("ranking-general-body"),
+  rankingBodies: {
+    ligue1: $("ranking-ligue1-body"),
+    liga: $("ranking-liga-body"),
+    serieA: $("ranking-serieA-body"),
+    premierLeague: $("ranking-premierLeague-body"),
+    ldc: $("ranking-ldc-body")
+  },
+
+  matchContainers: {
+    ligue1: $("matches-ligue1"),
+    liga: $("matches-liga"),
+    serieA: $("matches-serieA"),
+    premierLeague: $("matches-premierLeague"),
+    ldc: $("matches-ldc")
+  },
+
+  evolutionPlayerSelect: $("evolution-player-select"),
+  evolutionChart: $("evolution-chart"),
+
+  adminCreateUserForm: $("admin-create-user-form"),
+  createUserName: $("create-user-name"),
+  createUserEmail: $("create-user-email"),
+  createUserPassword: $("create-user-password"),
+
+  adminCreateMatchForm: $("admin-create-match-form"),
+  adminMatchCompetition: $("admin-match-competition"),
+  adminMatchRound: $("admin-match-round"),
+  adminMatchHome: $("admin-match-home"),
+  adminMatchAway: $("admin-match-away"),
+  adminMatchKickoff: $("admin-match-kickoff"),
+
+  adminResultsList: $("admin-results-list")
 };
 
-const rankingBodies = {
-  ligue1: document.getElementById("ligue1-ranking-body"),
-  liga: document.getElementById("liga-ranking-body"),
-  serieA: document.getElementById("serieA-ranking-body"),
-  premierLeague: document.getElementById("premierLeague-ranking-body"),
-  ldc: document.getElementById("ldc-ranking-body")
-};
-
-const adminMatchForm = document.getElementById("admin-match-form");
-const adminCompetition = document.getElementById("admin-competition");
-const adminRound = document.getElementById("admin-round");
-const adminHomeTeam = document.getElementById("admin-home-team");
-const adminAwayTeam = document.getElementById("admin-away-team");
-const adminKickoff = document.getElementById("admin-kickoff");
-const adminEnabled = document.getElementById("admin-enabled");
-const adminFormFeedback = document.getElementById("admin-form-feedback");
-const adminMatchList = document.getElementById("admin-match-list");
-
-const themeToggle = document.getElementById("theme-toggle");
-const themeToggleIcon = document.getElementById("theme-toggle-icon");
-const evolutionCanvas = document.getElementById("evolution-chart");
-
+/* =========================================================
+   OUTILS
+   ========================================================= */
 function escapeHtml(value = "") {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -120,641 +157,827 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#039;");
 }
 
-function formatDate(value) {
-  if (!value) return "Date non définie";
-  const date = value?.toDate ? value.toDate() : new Date(value);
+function toMillis(value) {
+  if (!value) return 0;
+  if (value?.toMillis) return value.toMillis();
+  if (value instanceof Date) return value.getTime();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function formatDateTime(value) {
+  const ms = toMillis(value);
+  if (!ms) return "Date inconnue";
   return new Intl.DateTimeFormat("fr-FR", {
     dateStyle: "medium",
     timeStyle: "short"
-  }).format(date);
+  }).format(ms);
 }
 
-function parseDate(value) {
-  return value?.toDate ? value.toDate() : new Date(value);
+function nowMs() {
+  return Date.now();
 }
 
-function getMatchResultType(homeScore, awayScore) {
-  if (homeScore > awayScore) return "H";
-  if (homeScore < awayScore) return "A";
+function isMatchClosed(match) {
+  return nowMs() >= toMillis(match.kickoff);
+}
+
+function isMatchFinished(match) {
+  return Number.isFinite(match.homeScore) && Number.isFinite(match.awayScore);
+}
+
+function getOutcome(home, away) {
+  if (home > away) return "H";
+  if (home < away) return "A";
   return "D";
 }
 
-function computePoints(pred, match) {
+function getPredictionPoints(predHome, predAway, realHome, realAway) {
   if (
-    pred == null ||
-    pred.homeScore == null ||
-    pred.awayScore == null ||
-    match.homeScore == null ||
-    match.awayScore == null
-  ) return 0;
+    !Number.isFinite(predHome) ||
+    !Number.isFinite(predAway) ||
+    !Number.isFinite(realHome) ||
+    !Number.isFinite(realAway)
+  ) {
+    return 0;
+  }
 
-  const exact = pred.homeScore === match.homeScore && pred.awayScore === match.awayScore;
-  const predictedResult = getMatchResultType(pred.homeScore, pred.awayScore);
-  const realResult = getMatchResultType(match.homeScore, match.awayScore);
+  if (predHome === realHome && predAway === realAway) {
+    return POINTS.exact;
+  }
 
-  if (exact) return 3;
-  if (predictedResult === realResult) return 1;
-  return 0;
+  if (getOutcome(predHome, predAway) === getOutcome(realHome, realAway)) {
+    return POINTS.outcome;
+  }
+
+  return POINTS.wrong;
 }
 
-function setTheme(theme) {
-  state.theme = theme;
-  document.documentElement.setAttribute("data-theme", theme);
-  themeToggleIcon.textContent = theme === "dark" ? "☀️" : "🌙";
+function getCompetitionLabel(competitionId) {
+  return COMPETITIONS.find((c) => c.id === competitionId)?.label || competitionId;
 }
 
-function getPredictionForUser(matchId, userId) {
-  return state.predictions.find(p => p.matchId === matchId && p.userId === userId) || null;
+function getDisplayName(user) {
+  return user?.displayName || user?.name || user?.email || "Participant";
 }
 
-function getCompetitionMatches(competitionId) {
-  return state.matches
-    .filter(m => m.competitionId === competitionId && m.enabled === true)
-    .sort((a, b) => parseDate(a.kickoff) - parseDate(b.kickoff));
+function weekKeyFromKickoff(kickoff) {
+  const date = new Date(toMillis(kickoff));
+  if (Number.isNaN(date.getTime())) return "";
+  const jan1 = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const current = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dayMs = 86400000;
+  const dayOfYear = Math.floor((current - jan1) / dayMs) + 1;
+  const week = Math.ceil(dayOfYear / 7);
+  return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
-function getCompetitionStatsForUser(userId, competitionId) {
-  const matches = state.matches.filter(m => m.competitionId === competitionId);
-  let points = 0;
-  let playedPredictions = 0;
+function generateColor(index) {
+  const colors = [
+    "#0d6b73",
+    "#aa151b",
+    "#009246",
+    "#012169",
+    "#0a84ff",
+    "#8b5cf6",
+    "#f59e0b",
+    "#ef4444",
+    "#10b981",
+    "#3b82f6"
+  ];
+  return colors[index % colors.length];
+}
 
-  matches.forEach(match => {
-    const pred = getPredictionForUser(match.id, userId);
-    if (pred) playedPredictions += 1;
-    points += computePoints(pred, match);
+function alertError(error, fallback = "Une erreur est survenue.") {
+  console.error(error);
+  alert(error?.message || fallback);
+}
+
+/* =========================================================
+   THEME
+   ========================================================= */
+(function initTheme() {
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+})();
+
+dom.themeToggle?.addEventListener("click", () => {
+  const current = document.documentElement.getAttribute("data-theme");
+  document.documentElement.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+});
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+function setView(viewId) {
+  state.currentView = viewId;
+
+  document.querySelectorAll(".nav-link").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.viewTarget === viewId);
   });
 
-  return { points, playedPredictions };
-}
-
-function getGeneralStatsForUser(userId) {
-  const byCompetition = {};
-  let total = 0;
-
-  Object.keys(COMPETITIONS).forEach(compId => {
-    const stats = getCompetitionStatsForUser(userId, compId);
-    byCompetition[compId] = stats.points;
-    total += stats.points;
+  document.querySelectorAll(".view").forEach((view) => {
+    view.classList.toggle("active", view.dataset.view === viewId);
   });
 
-  return { total, byCompetition };
+  const titles = {
+    general: "Classement général",
+    ligue1: "Ligue 1",
+    liga: "Liga",
+    serieA: "Serie A",
+    premierLeague: "Premier League",
+    ldc: "Ligue des Champions",
+    evolution: "Évolution",
+    admin: "Admin"
+  };
+
+  dom.pageTitle.textContent = titles[viewId] || "Prono Multi-Championnats";
 }
 
-function isKickoffPassed(match) {
-  return parseDate(match.kickoff).getTime() <= Date.now();
-}
+document.querySelectorAll(".nav-link").forEach((btn) => {
+  btn.addEventListener("click", () => setView(btn.dataset.viewTarget));
+});
 
-function getWeekKey(value) {
-  const date = parseDate(value);
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
-}
-
-function ensureUserDoc(user) {
-  if (!user) return Promise.resolve();
+/* =========================================================
+   AUTH
+   ========================================================= */
+async function ensureUserProfile(user, fallbackName = "") {
   const ref = doc(db, "users", user.uid);
-  return getDoc(ref).then(snap => {
-    const payload = {
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    const profile = {
       uid: user.uid,
-      displayName: user.displayName || user.email || "Participant",
       email: user.email || "",
-      photoURL: user.photoURL || "",
-      isAdmin: snap.exists() ? !!snap.data().isAdmin : false,
-      updatedAt: serverTimestamp()
+      displayName: user.displayName || fallbackName || user.email?.split("@")[0] || "Participant",
+      isAdmin: false,
+      createdAt: serverTimestamp()
     };
-    if (!snap.exists()) payload.createdAt = serverTimestamp();
-    return setDoc(ref, payload, { merge: true });
-  });
-}
-
-function switchView(viewId) {
-  state.activeView = viewId;
-
-  document.querySelectorAll(".nav-link").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.view === viewId);
-  });
-
-  document.querySelectorAll(".view").forEach(view => {
-    view.classList.toggle("active", view.id === `view-${viewId}`);
-  });
-
-  pageTitle.textContent = VIEWS[viewId] || "Pronos Europe";
-
-  if (viewId === "evolution") {
-    requestAnimationFrame(() => renderEvolutionChart());
+    await setDoc(ref, profile);
+    return profile;
   }
+
+  return { id: snap.id, ...snap.data() };
 }
 
-document.querySelectorAll(".nav-link").forEach(btn => {
-  btn.addEventListener("click", () => switchView(btn.dataset.view));
-});
-
-loginBtn.addEventListener("click", async () => {
+async function loginWithGoogle() {
   try {
-    await signInWithPopup(auth, provider);
-    emailAuthFeedback.textContent = "";
+    await signInWithPopup(auth, googleProvider);
   } catch (error) {
-    console.error(error);
-    authStatus.textContent = "Erreur de connexion";
+    alertError(error, "Impossible de se connecter avec Google.");
   }
-});
+}
 
-logoutBtn.addEventListener("click", async () => {
+async function loginWithEmail() {
+  try {
+    const email = dom.authEmail.value.trim();
+    const password = dom.authPassword.value.trim();
+    if (!email || !password) {
+      alert("Merci de remplir l'email et le mot de passe.");
+      return;
+    }
+
+    await signInWithEmailAndPassword(auth, email, password);
+    dom.authDialog.close();
+  } catch (error) {
+    alertError(error, "Connexion email impossible.");
+  }
+}
+
+async function signupWithEmail() {
+  try {
+    const email = dom.authEmail.value.trim();
+    const password = dom.authPassword.value.trim();
+
+    if (!email || !password) {
+      alert("Merci de remplir l'email et le mot de passe.");
+      return;
+    }
+
+    if (password.length < 6) {
+      alert("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
+
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await ensureUserProfile(cred.user);
+    dom.authDialog.close();
+  } catch (error) {
+    alertError(error, "Création du compte impossible.");
+  }
+}
+
+async function logoutUser() {
   try {
     await signOut(auth);
   } catch (error) {
-    console.error(error);
+    alertError(error, "Déconnexion impossible.");
   }
-});
+}
 
-signupBtn.addEventListener("click", async () => {
-  const email = authEmail.value.trim();
-  const password = authPassword.value.trim();
-  if (!email || !password) {
-    emailAuthFeedback.textContent = "Email et mot de passe requis.";
+dom.btnGoogleLogin?.addEventListener("click", loginWithGoogle);
+dom.btnOpenAuth?.addEventListener("click", () => dom.authDialog.showModal());
+dom.btnEmailLogin?.addEventListener("click", loginWithEmail);
+dom.btnEmailSignup?.addEventListener("click", signupWithEmail);
+dom.btnLogout?.addEventListener("click", logoutUser);
+
+onAuthStateChanged(auth, async (user) => {
+  state.currentUser = user || null;
+
+  if (!user) {
+    state.userProfile = null;
+    dom.authStatus.textContent = "Non connecté";
+    dom.authLoggedOut.classList.remove("hidden");
+    dom.authLoggedIn.classList.add("hidden");
+    renderAll();
     return;
   }
+
+  dom.syncStatus.textContent = "Connexion…";
 
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
-    emailAuthFeedback.textContent = "Compte créé avec succès.";
+    state.userProfile = await ensureUserProfile(user);
+    dom.authStatus.textContent = `${getDisplayName(state.userProfile)}${state.userProfile.isAdmin ? " · Admin" : ""}`;
+    dom.authLoggedOut.classList.add("hidden");
+    dom.authLoggedIn.classList.remove("hidden");
   } catch (error) {
-    console.error(error);
-    emailAuthFeedback.textContent = error.message || "Erreur à l'inscription.";
-  }
-});
-
-signinBtn.addEventListener("click", async () => {
-  const email = authEmail.value.trim();
-  const password = authPassword.value.trim();
-  if (!email || !password) {
-    emailAuthFeedback.textContent = "Email et mot de passe requis.";
-    return;
-  }
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    emailAuthFeedback.textContent = "";
-  } catch (error) {
-    console.error(error);
-    emailAuthFeedback.textContent = error.message || "Erreur à la connexion.";
-  }
-});
-
-onAuthStateChanged(auth, async user => {
-  state.currentUser = user;
-
-  if (user) {
-    await ensureUserDoc(user);
-    authStatus.textContent = user.displayName || user.email || "Connecté";
-    loginBtn.classList.add("hidden");
-    logoutBtn.classList.remove("hidden");
-
-    const userSnap = await getDoc(doc(db, "users", user.uid));
-    state.isAdmin = !!(userSnap.exists() && userSnap.data().isAdmin);
-  } else {
-    authStatus.textContent = "Non connecté";
-    loginBtn.classList.remove("hidden");
-    logoutBtn.classList.add("hidden");
-    state.isAdmin = false;
+    alertError(error, "Impossible de charger le profil utilisateur.");
   }
 
   renderAll();
 });
 
-onSnapshot(collection(db, "users"), snapshot => {
-  state.users = snapshot.docs.map(docSnap => ({
-    id: docSnap.id,
-    ...docSnap.data()
-  }));
-  liveStatus.textContent = "Utilisateurs synchronisés";
-  renderAll();
+/* =========================================================
+   FIRESTORE LISTENERS
+   ========================================================= */
+function subscribeCollection(collectionName, assign) {
+  const q = query(collection(db, collectionName));
+  return onSnapshot(
+    q,
+    (snap) => {
+      assign(
+        snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data()
+        }))
+      );
+      dom.syncStatus.textContent = "Synchronisé";
+      computeDerivedData();
+      renderAll();
+    },
+    (error) => {
+      console.error(error);
+      dom.syncStatus.textContent = "Erreur sync";
+    }
+  );
+}
+
+subscribeCollection("users", (items) => {
+  state.users = items;
 });
 
-onSnapshot(collection(db, "matches"), snapshot => {
-  state.matches = snapshot.docs.map(docSnap => ({
-    id: docSnap.id,
-    ...docSnap.data()
-  }));
-  generalTotalMatches.textContent = String(state.matches.length);
-  liveStatus.textContent = "Matchs synchronisés";
-  renderAll();
+subscribeCollection("matches", (items) => {
+  state.matches = items.sort((a, b) => toMillis(a.kickoff) - toMillis(b.kickoff));
 });
 
-onSnapshot(collection(db, "predictions"), snapshot => {
-  state.predictions = snapshot.docs.map(docSnap => ({
-    id: docSnap.id,
-    ...docSnap.data()
-  }));
-  liveStatus.textContent = "Pronostics synchronisés";
-  renderAll();
+subscribeCollection("predictions", (items) => {
+  state.predictions = items;
 });
 
-function renderGeneralRanking() {
-  const rows = state.users.map(user => {
-    const stats = getGeneralStatsForUser(user.id);
-    return {
-      user,
-      total: stats.total,
-      byCompetition: stats.byCompetition
-    };
-  }).sort((a, b) => b.total - a.total || (a.user.displayName || "").localeCompare(b.user.displayName || ""));
+/* =========================================================
+   DERIVED DATA
+   ========================================================= */
+function computeDerivedData() {
+  const userMap = new Map(state.users.map((u) => [u.id || u.uid, u]));
+  const predictionsByMatch = new Map();
 
-  generalTotalPlayers.textContent = String(rows.length);
-
-  generalRankingBody.innerHTML = rows.length
-    ? rows.map((row, index) => `
-      <tr class="${index === 0 ? "rank-first" : ""} ${state.currentUser?.uid === row.user.id ? "rank-me" : ""}">
-        <td>${index + 1}</td>
-        <td>${escapeHtml(row.user.displayName || "Participant")}</td>
-        <td><strong>${row.total}</strong></td>
-        <td>${row.byCompetition.ligue1 || 0}</td>
-        <td>${row.byCompetition.liga || 0}</td>
-        <td>${row.byCompetition.serieA || 0}</td>
-        <td>${row.byCompetition.premierLeague || 0}</td>
-        <td>${row.byCompetition.ldc || 0}</td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="8">Aucun participant pour le moment.</td></tr>`;
-}
-
-function renderMatchCard(match) {
-  const user = state.currentUser;
-  const prediction = user ? getPredictionForUser(match.id, user.uid) : null;
-  const lock = isKickoffPassed(match);
-  const resultKnown = match.homeScore != null && match.awayScore != null;
-
-  return `
-    <article class="match-card">
-      <div class="match-top">
-        <div>
-          <div class="match-title">${escapeHtml(match.homeTeam)} vs ${escapeHtml(match.awayTeam)}</div>
-          <div class="match-meta">${escapeHtml(match.round || "")} • ${formatDate(match.kickoff)}</div>
-        </div>
-        <span class="tag ${lock ? "tag-closed" : "tag-open"}">${lock ? "Fermé" : "Ouvert"}</span>
-      </div>
-
-      ${resultKnown ? `<div class="score-line">${match.homeScore} - ${match.awayScore}</div>` : `<div class="match-meta">Score officiel en attente</div>`}
-
-      ${
-        user
-          ? `
-            <form class="prediction-form" data-match-id="${match.id}">
-              <input type="number" min="0" step="1" name="homeScore" value="${prediction?.homeScore ?? ""}" placeholder="${escapeHtml(match.homeTeam)}" ${lock ? "disabled" : ""} required>
-              <input type="number" min="0" step="1" name="awayScore" value="${prediction?.awayScore ?? ""}" placeholder="${escapeHtml(match.awayTeam)}" ${lock ? "disabled" : ""} required>
-              <button class="btn btn-primary" type="submit" ${lock ? "disabled" : ""}>Valider</button>
-            </form>
-          `
-          : `<p class="helper-text">Connecte-toi pour enregistrer ton pronostic.</p>`
-      }
-
-      ${prediction ? `<span class="points-badge">Ton prono : ${prediction.homeScore} - ${prediction.awayScore}</span>` : ""}
-    </article>
-  `;
-}
-
-function renderCompetitionMatches(competitionId) {
-  const container = competitionMatchContainers[competitionId];
-  if (!container) return;
-
-  const matches = getCompetitionMatches(competitionId);
-
-  container.innerHTML = matches.length
-    ? matches.map(renderMatchCard).join("")
-    : `<article class="match-card"><p>Aucun match ouvert pour cette compétition.</p></article>`;
-
-  container.querySelectorAll(".prediction-form").forEach(form => {
-    form.addEventListener("submit", handlePredictionSubmit);
-  });
-}
-
-function renderCompetitionRanking(competitionId) {
-  const tbody = rankingBodies[competitionId];
-  if (!tbody) return;
-
-  const rows = state.users.map(user => {
-    const stats = getCompetitionStatsForUser(user.id, competitionId);
-    return {
-      user,
-      points: stats.points,
-      playedPredictions: stats.playedPredictions
-    };
-  }).sort((a, b) => b.points - a.points || b.playedPredictions - a.playedPredictions || (a.user.displayName || "").localeCompare(b.user.displayName || ""));
-
-  tbody.innerHTML = rows.length
-    ? rows.map((row, index) => `
-      <tr class="${index === 0 ? "rank-first" : ""} ${state.currentUser?.uid === row.user.id ? "rank-me" : ""}">
-        <td>${index + 1}</td>
-        <td>${escapeHtml(row.user.displayName || "Participant")}</td>
-        <td><strong>${row.points}</strong></td>
-        <td>${row.playedPredictions}</td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="4">Aucun participant pour le moment.</td></tr>`;
-}
-
-async function handlePredictionSubmit(event) {
-  event.preventDefault();
-
-  if (!state.currentUser) {
-    alert("Connexion requise.");
-    return;
+  for (const pred of state.predictions) {
+    if (!predictionsByMatch.has(pred.matchId)) predictionsByMatch.set(pred.matchId, []);
+    predictionsByMatch.get(pred.matchId).push(pred);
   }
 
-  const form = event.currentTarget;
-  const matchId = form.dataset.matchId;
-  const homeScore = Number(form.homeScore.value);
-  const awayScore = Number(form.awayScore.value);
-
-  const match = state.matches.find(m => m.id === matchId);
-  if (!match) return;
-
-  if (isKickoffPassed(match)) {
-    alert("Le pronostic est fermé pour ce match.");
-    return;
+  const scoreMap = new Map();
+  for (const user of state.users) {
+    const uid = user.id || user.uid;
+    scoreMap.set(uid, {
+      userId: uid,
+      displayName: getDisplayName(user),
+      competitions: {
+        ligue1: 0,
+        liga: 0,
+        serieA: 0,
+        premierLeague: 0,
+        ldc: 0
+      },
+      total: 0
+    });
   }
 
-  try {
-    const predictionId = `${state.currentUser.uid}_${matchId}`;
-    await setDoc(doc(db, "predictions", predictionId), {
-      userId: state.currentUser.uid,
-      matchId,
-      competitionId: match.competitionId,
-      homeScore,
-      awayScore,
-      updatedAt: serverTimestamp(),
-      createdAt: serverTimestamp()
-    }, { merge: true });
-  } catch (error) {
-    console.error(error);
-    alert("Erreur lors de l'enregistrement du pronostic.");
-  }
-}
+  const evolutionBase = [];
+  let finishedCounter = 0;
 
-adminMatchForm?.addEventListener("submit", async event => {
-  event.preventDefault();
+  const finishedMatches = [...state.matches]
+    .filter((m) => isMatchFinished(m))
+    .sort((a, b) => toMillis(a.kickoff) - toMillis(b.kickoff));
 
-  if (!state.currentUser || !state.isAdmin) {
-    adminFormFeedback.textContent = "Accès admin requis.";
-    return;
-  }
+  for (const match of finishedMatches) {
+    finishedCounter += 1;
+    const matchPreds = predictionsByMatch.get(match.id) || [];
 
-  const competition = adminCompetition.value;
-  const round = adminRound.value.trim();
-  const kickoff = adminKickoff.value;
+    for (const pred of matchPreds) {
+      const scoreEntry = scoreMap.get(pred.userId);
+      if (!scoreEntry) continue;
 
-  if (COMPETITIONS[competition]?.singleWeekly) {
-    const weekKey = getWeekKey(kickoff);
-    const sameWeek = state.matches.filter(m =>
-      m.competitionId === competition &&
-      m.round === round &&
-      getWeekKey(m.kickoff) === weekKey &&
-      m.enabled === true
-    );
+      const points = getPredictionPoints(
+        Number(pred.predHome),
+        Number(pred.predAway),
+        Number(match.homeScore),
+        Number(match.awayScore)
+      );
 
-    if (sameWeek.length > 0) {
-      adminFormFeedback.textContent = "Un match actif existe déjà pour cette semaine dans ce championnat.";
-      return;
+      scoreEntry.competitions[match.competitionId] += points;
+      scoreEntry.total += points;
+    }
+
+    for (const entry of scoreMap.values()) {
+      evolutionBase.push({
+        step: finishedCounter,
+        matchId: match.id,
+        label: `${getCompetitionLabel(match.competitionId)} · ${match.homeTeam} - ${match.awayTeam}`,
+        userId: entry.userId,
+        displayName: entry.displayName,
+        total: entry.total
+      });
     }
   }
 
-  try {
-    const matchRef = doc(collection(db, "matches"));
-    await setDoc(matchRef, {
-      competitionId: competition,
-      round,
-      homeTeam: adminHomeTeam.value.trim(),
-      awayTeam: adminAwayTeam.value.trim(),
-      kickoff,
-      enabled: adminEnabled.value === "true",
-      homeScore: null,
-      awayScore: null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+  const rankingGeneral = [...scoreMap.values()].sort((a, b) => {
+    if (b.total !== a.total) return b.total - a.total;
+    return a.displayName.localeCompare(b.displayName, "fr");
+  });
 
-    adminFormFeedback.textContent = "Match enregistré avec succès.";
-    adminMatchForm.reset();
-    adminCompetition.value = "ligue1";
-    adminEnabled.value = "true";
-  } catch (error) {
-    console.error(error);
-    adminFormFeedback.textContent = "Erreur lors de l'enregistrement du match.";
+  const rankingByCompetition = {
+    ligue1: [],
+    liga: [],
+    serieA: [],
+    premierLeague: [],
+    ldc: []
+  };
+
+  for (const comp of COMPETITIONS) {
+    rankingByCompetition[comp.id] = [...scoreMap.values()]
+      .map((entry) => ({
+        userId: entry.userId,
+        displayName: entry.displayName,
+        points: entry.competitions[comp.id]
+      }))
+      .sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return a.displayName.localeCompare(b.displayName, "fr");
+      });
   }
-});
 
-function renderAdminMatches() {
-  if (!adminMatchList) return;
+  state.rankings.general = rankingGeneral;
+  state.rankings.byCompetition = rankingByCompetition;
+  state.evolution = evolutionBase;
+}
 
-  if (!state.isAdmin) {
-    adminMatchList.innerHTML = `<article class="match-card"><p>Connecte-toi avec un compte administrateur pour gérer les matchs.</p></article>`;
+/* =========================================================
+   RENDERS
+   ========================================================= */
+function getCurrentUserPrediction(matchId) {
+  if (!state.currentUser) return null;
+  return state.predictions.find((p) => p.matchId === matchId && p.userId === state.currentUser.uid) || null;
+}
+
+function renderCompetitionMatches(competitionId) {
+  const container = dom.matchContainers[competitionId];
+  if (!container) return;
+
+  const matches = state.matches.filter((m) => m.competitionId === competitionId);
+
+  if (!matches.length) {
+    container.innerHTML = `<div class="match-card"><p class="helper-text">Aucun match n’a encore été ajouté.</p></div>`;
     return;
   }
 
-  const sorted = [...state.matches].sort((a, b) => parseDate(a.kickoff) - parseDate(b.kickoff));
+  container.innerHTML = matches.map((match) => {
+    const myPred = getCurrentUserPrediction(match.id);
+    const closed = isMatchClosed(match);
+    const finished = isMatchFinished(match);
+    const tagClass = closed ? "tag tag-closed" : "tag tag-open";
+    const tagText = closed ? "Fermé" : "Ouvert";
+    const exactScore = finished ? `<div class="score-line">${match.homeScore} - ${match.awayScore}</div>` : "";
+    const predInfo = myPred
+      ? `<div class="points-badge">Mon prono : ${Number(myPred.predHome)} - ${Number(myPred.predAway)}</div>`
+      : `<div class="points-badge">Aucun prono enregistré</div>`;
 
-  adminMatchList.innerHTML = sorted.length
-    ? sorted.map(match => `
+    return `
       <article class="match-card">
         <div class="match-top">
           <div>
-            <div class="match-title">${escapeHtml(match.homeTeam)} vs ${escapeHtml(match.awayTeam)}</div>
-            <div class="match-meta">${escapeHtml(COMPETITIONS[match.competitionId]?.label || match.competitionId)} • ${escapeHtml(match.round || "")} • ${formatDate(match.kickoff)}</div>
+            <div class="match-title">${escapeHtml(match.homeTeam)} - ${escapeHtml(match.awayTeam)}</div>
+            <div class="match-meta">${escapeHtml(match.roundLabel || "")} · ${formatDateTime(match.kickoff)}</div>
           </div>
-          <span class="tag ${match.enabled ? "tag-open" : "tag-closed"}">${match.enabled ? "Actif" : "Inactif"}</span>
+          <span class="${tagClass}">${tagText}</span>
         </div>
 
-        <form class="admin-result-form" data-admin-match-id="${match.id}">
-          <input type="number" min="0" step="1" name="homeScore" value="${match.homeScore ?? ""}" placeholder="Score domicile">
-          <input type="number" min="0" step="1" name="awayScore" value="${match.awayScore ?? ""}" placeholder="Score extérieur">
-          <button type="button" class="btn btn-secondary toggle-enabled-btn" data-match-id="${match.id}">
-            ${match.enabled ? "Fermer" : "Ouvrir"}
-          </button>
-          <button type="submit" class="btn btn-primary">Sauver</button>
+        ${exactScore}
+        ${predInfo}
+
+        <form class="prediction-form" data-prediction-form="${match.id}">
+          <input type="number" min="0" inputmode="numeric" placeholder="Domicile" value="${myPred ? Number(myPred.predHome) : ""}" ${closed ? "disabled" : ""} />
+          <input type="number" min="0" inputmode="numeric" placeholder="Extérieur" value="${myPred ? Number(myPred.predAway) : ""}" ${closed ? "disabled" : ""} />
+          <button class="btn btn-primary" type="submit" ${closed ? "disabled" : ""}>Valider</button>
         </form>
       </article>
-    `).join("")
-    : `<article class="match-card"><p>Aucun match enregistré.</p></article>`;
+    `;
+  }).join("");
 
-  adminMatchList.querySelectorAll(".admin-result-form").forEach(form => {
-    form.addEventListener("submit", handleAdminResultSubmit);
+  container.querySelectorAll("[data-prediction-form]").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const matchId = form.getAttribute("data-prediction-form");
+      const inputs = form.querySelectorAll("input");
+      const predHome = Number(inputs[0].value);
+      const predAway = Number(inputs[1].value);
+      await submitPrediction(matchId, predHome, predAway);
+    });
   });
-
-  adminMatchList.querySelectorAll(".toggle-enabled-btn").forEach(btn => {
-    btn.addEventListener("click", handleToggleEnabled);
-  });
 }
 
-async function handleAdminResultSubmit(event) {
-  event.preventDefault();
+function renderRankings() {
+  const myUid = state.currentUser?.uid || null;
 
-  if (!state.currentUser || !state.isAdmin) {
-    alert("Accès admin requis.");
-    return;
+  dom.rankingGeneralBody.innerHTML = state.rankings.general.map((entry, index) => {
+    const classNames = [
+      index === 0 ? "rank-first" : "",
+      myUid && entry.userId === myUid ? "rank-me" : ""
+    ].filter(Boolean).join(" ");
+
+    return `
+      <tr class="${classNames}">
+        <td>${index + 1}</td>
+        <td>${escapeHtml(entry.displayName)}</td>
+        <td>${entry.competitions.ligue1}</td>
+        <td>${entry.competitions.liga}</td>
+        <td>${entry.competitions.serieA}</td>
+        <td>${entry.competitions.premierLeague}</td>
+        <td>${entry.competitions.ldc}</td>
+        <td><strong>${entry.total}</strong></td>
+      </tr>
+    `;
+  }).join("");
+
+  for (const comp of COMPETITIONS) {
+    const body = dom.rankingBodies[comp.id];
+    if (!body) continue;
+
+    body.innerHTML = state.rankings.byCompetition[comp.id].map((entry, index) => {
+      const classNames = [
+        index === 0 ? "rank-first" : "",
+        myUid && entry.userId === myUid ? "rank-me" : ""
+      ].filter(Boolean).join(" ");
+
+      return `
+        <tr class="${classNames}">
+          <td>${index + 1}</td>
+          <td>${escapeHtml(entry.displayName)}</td>
+          <td><strong>${entry.points}</strong></td>
+        </tr>
+      `;
+    }).join("");
   }
 
-  const form = event.currentTarget;
-  const matchId = form.dataset.adminMatchId;
+  const myRankIndex = state.rankings.general.findIndex((r) => r.userId === myUid);
+  const myEntry = state.rankings.general.find((r) => r.userId === myUid);
 
-  try {
-    const home = form.homeScore.value;
-    const away = form.awayScore.value;
-
-    await updateDoc(doc(db, "matches", matchId), {
-      homeScore: home === "" ? null : Number(home),
-      awayScore: away === "" ? null : Number(away),
-      updatedAt: serverTimestamp()
-    });
-  } catch (error) {
-    console.error(error);
-    alert("Erreur lors de la sauvegarde du résultat.");
-  }
+  dom.statTotalUsers.textContent = String(state.users.length);
+  dom.statTotalFinished.textContent = String(state.matches.filter(isMatchFinished).length);
+  dom.statMyRank.textContent = myRankIndex >= 0 ? String(myRankIndex + 1) : "-";
+  dom.statMyPoints.textContent = String(myEntry?.total || 0);
 }
 
-async function handleToggleEnabled(event) {
-  const matchId = event.currentTarget.dataset.matchId;
-  const match = state.matches.find(m => m.id === matchId);
+function renderEvolution() {
+  if (!dom.evolutionPlayerSelect) return;
 
-  if (!state.currentUser || !state.isAdmin || !match) {
-    alert("Accès admin requis.");
-    return;
+  const currentSelection = new Set(
+    Array.from(dom.evolutionPlayerSelect.selectedOptions).map((opt) => opt.value)
+  );
+
+  dom.evolutionPlayerSelect.innerHTML = state.users.map((user) => {
+    const uid = user.id || user.uid;
+    const selected = currentSelection.size ? currentSelection.has(uid) : false;
+    return `<option value="${uid}" ${selected ? "selected" : ""}>${escapeHtml(getDisplayName(user))}</option>`;
+  }).join("");
+
+  if (!currentSelection.size && state.users.length) {
+    for (let i = 0; i < Math.min(3, dom.evolutionPlayerSelect.options.length); i += 1) {
+      dom.evolutionPlayerSelect.options[i].selected = true;
+    }
   }
 
-  try {
-    await updateDoc(doc(db, "matches", matchId), {
-      enabled: !match.enabled,
-      updatedAt: serverTimestamp()
-    });
-  } catch (error) {
-    console.error(error);
-    alert("Erreur lors du changement de statut.");
-  }
+  drawEvolutionChart();
 }
 
-function getEvolutionSeries() {
-  const orderedMatches = [...state.matches]
-    .filter(m => m.homeScore != null && m.awayScore != null)
-    .sort((a, b) => parseDate(a.kickoff) - parseDate(b.kickoff));
+function drawEvolutionChart() {
+  if (!window.Chart || !dom.evolutionChart) return;
 
-  return state.users.map(user => {
-    let cumulative = 0;
-    const data = orderedMatches.map(match => {
-      const pred = getPredictionForUser(match.id, user.id);
-      cumulative += computePoints(pred, match);
-      return cumulative;
-    });
+  const selectedIds = Array.from(dom.evolutionPlayerSelect.selectedOptions).map((opt) => opt.value);
+  const ctx = dom.evolutionChart.getContext("2d");
 
+  const grouped = new Map();
+  for (const row of state.evolution) {
+    if (!selectedIds.includes(row.userId)) continue;
+    if (!grouped.has(row.userId)) grouped.set(row.userId, []);
+    grouped.get(row.userId).push(row);
+  }
+
+  const labels = [...new Set(state.evolution.map((row) => row.label))];
+  const datasets = selectedIds.map((userId, index) => {
+    const rows = grouped.get(userId) || [];
+    const displayName = state.users.find((u) => (u.id || u.uid) === userId);
     return {
-      label: user.displayName || "Participant",
-      data,
-      colorIndex: data.length ? data[data.length - 1] % 6 : 0
+      label: getDisplayName(displayName),
+      data: rows.map((r) => r.total),
+      borderColor: generateColor(index),
+      backgroundColor: generateColor(index),
+      tension: 0.25,
+      fill: false
     };
   });
+
+  if (state.chart) {
+    state.chart.destroy();
+  }
+
+  state.chart = new Chart(ctx, {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom" }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
 }
 
-function renderEvolutionChart() {
-  if (!evolutionCanvas) return;
-  const ctx = evolutionCanvas.getContext("2d");
-  if (!ctx) return;
+dom.evolutionPlayerSelect?.addEventListener("change", drawEvolutionChart);
 
-  const series = getEvolutionSeries();
-  const orderedMatches = [...state.matches]
-    .filter(m => m.homeScore != null && m.awayScore != null)
-    .sort((a, b) => parseDate(a.kickoff) - parseDate(b.kickoff));
+function renderAdminResults() {
+  if (!dom.adminResultsList) return;
 
-  const dpr = window.devicePixelRatio || 1;
-  const cssWidth = evolutionCanvas.clientWidth || 1200;
-  const cssHeight = evolutionCanvas.clientHeight || 520;
+  const isAdmin = !!state.userProfile?.isAdmin;
 
-  evolutionCanvas.width = Math.floor(cssWidth * dpr);
-  evolutionCanvas.height = Math.floor(cssHeight * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  ctx.clearRect(0, 0, cssWidth, cssHeight);
-  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-surface").trim() || "#fff";
-  ctx.fillRect(0, 0, cssWidth, cssHeight);
-
-  if (!orderedMatches.length || !series.length) {
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-text-muted").trim() || "#666";
-    ctx.font = "16px Satoshi, sans-serif";
-    ctx.fillText("Aucune donnée suffisante pour afficher l'évolution.", 24, 40);
+  if (!isAdmin) {
+    dom.adminResultsList.innerHTML = `<div class="match-card"><p class="helper-text">Cette zone est réservée à l’administrateur.</p></div>`;
     return;
   }
 
-  const padding = { top: 30, right: 24, bottom: 48, left: 44 };
-  const chartW = cssWidth - padding.left - padding.right;
-  const chartH = cssHeight - padding.top - padding.bottom;
-
-  const maxY = Math.max(1, ...series.flatMap(s => s.data));
-  const colors = ["#0d6b73", "#c8102e", "#2d7a35", "#a35f13", "#001a72", "#6b4cff", "#9b2f76"];
-
-  ctx.strokeStyle = "rgba(128,128,128,.18)";
-  ctx.lineWidth = 1;
-
-  for (let i = 0; i <= 5; i++) {
-    const y = padding.top + (chartH / 5) * i;
-    ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(padding.left + chartW, y);
-    ctx.stroke();
+  if (!state.matches.length) {
+    dom.adminResultsList.innerHTML = `<div class="match-card"><p class="helper-text">Aucun match à gérer pour le moment.</p></div>`;
+    return;
   }
 
-  series.forEach((s, idx) => {
-    if (!s.data.length) return;
-    ctx.strokeStyle = colors[idx % colors.length];
-    ctx.lineWidth = 3;
-    ctx.beginPath();
+  dom.adminResultsList.innerHTML = state.matches.map((match) => `
+    <article class="match-card">
+      <div class="match-top">
+        <div>
+          <div class="match-title">${escapeHtml(match.homeTeam)} - ${escapeHtml(match.awayTeam)}</div>
+          <div class="match-meta">${escapeHtml(getCompetitionLabel(match.competitionId))} · ${formatDateTime(match.kickoff)}</div>
+        </div>
+        <span class="${isMatchClosed(match) ? "tag tag-closed" : "tag tag-open"}">${isMatchClosed(match) ? "Fermé" : "Ouvert"}</span>
+      </div>
 
-    s.data.forEach((value, i) => {
-      const x = padding.left + (chartW / Math.max(1, s.data.length - 1)) * i;
-      const y = padding.top + chartH - (value / maxY) * chartH;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+      <form class="admin-result-form" data-admin-result-form="${match.id}">
+        <input type="number" min="0" placeholder="Score domicile" value="${Number.isFinite(match.homeScore) ? Number(match.homeScore) : ""}" />
+        <input type="number" min="0" placeholder="Score extérieur" value="${Number.isFinite(match.awayScore) ? Number(match.awayScore) : ""}" />
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <button class="btn btn-ghost" type="button" data-delete-match="${match.id}">Supprimer</button>
+      </form>
+    </article>
+  `).join("");
+
+  dom.adminResultsList.querySelectorAll("[data-admin-result-form]").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const matchId = form.getAttribute("data-admin-result-form");
+      const inputs = form.querySelectorAll("input");
+      const homeScore = Number(inputs[0].value);
+      const awayScore = Number(inputs[1].value);
+      await saveOfficialResult(matchId, homeScore, awayScore);
     });
-
-    ctx.stroke();
   });
 
-  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--color-text-muted").trim() || "#666";
-  ctx.font = "12px Satoshi, sans-serif";
-  ctx.fillText("Points cumulés", 12, 18);
+  dom.adminResultsList.querySelectorAll("[data-delete-match]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const matchId = btn.getAttribute("data-delete-match");
+      await deleteMatch(matchId);
+    });
+  });
+}
 
-  orderedMatches.forEach((match, idx) => {
-    const x = padding.left + (chartW / Math.max(1, orderedMatches.length - 1)) * idx;
-    ctx.save();
-    ctx.translate(x, cssHeight - 14);
-    ctx.rotate(-0.35);
-    ctx.fillText(`${match.round || ""}`, -6, 0);
-    ctx.restore();
+function renderAdminVisibility() {
+  const isAdmin = !!state.userProfile?.isAdmin;
+  document.querySelectorAll("#view-admin .panel form, #view-admin .panel .admin-match-list").forEach((node) => {
+    node.style.pointerEvents = isAdmin ? "auto" : "none";
+    node.style.opacity = isAdmin ? "1" : "0.55";
   });
 }
 
 function renderAll() {
-  renderGeneralRanking();
-  Object.keys(COMPETITIONS).forEach(compId => {
-    renderCompetitionMatches(compId);
-    renderCompetitionRanking(compId);
-  });
-  renderAdminMatches();
+  COMPETITIONS.forEach((comp) => renderCompetitionMatches(comp.id));
+  renderRankings();
+  renderEvolution();
+  renderAdminResults();
+  renderAdminVisibility();
+}
 
-  if (state.activeView === "evolution") {
-    renderEvolutionChart();
+/* =========================================================
+   ACTIONS USER
+   ========================================================= */
+async function submitPrediction(matchId, predHome, predAway) {
+  try {
+    if (!state.currentUser) {
+      alert("Merci de vous connecter pour enregistrer un pronostic.");
+      return;
+    }
+
+    if (!Number.isFinite(predHome) || !Number.isFinite(predAway) || predHome < 0 || predAway < 0) {
+      alert("Merci de saisir deux scores valides.");
+      return;
+    }
+
+    const match = state.matches.find((m) => m.id === matchId);
+    if (!match) {
+      alert("Match introuvable.");
+      return;
+    }
+
+    if (isMatchClosed(match)) {
+      alert("Les pronostics pour ce match sont fermés.");
+      return;
+    }
+
+    const existing = state.predictions.find((p) => p.matchId === matchId && p.userId === state.currentUser.uid);
+
+    if (existing) {
+      await updateDoc(doc(db, "predictions", existing.id), {
+        predHome,
+        predAway,
+        updatedAt: serverTimestamp()
+      });
+    } else {
+      await addDoc(collection(db, "predictions"), {
+        matchId,
+        competitionId: match.competitionId,
+        userId: state.currentUser.uid,
+        predHome,
+        predAway,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    }
+  } catch (error) {
+    alertError(error, "Impossible d’enregistrer le pronostic.");
   }
 }
 
-themeToggle.addEventListener("click", () => {
-  const next = state.theme === "dark" ? "light" : "dark";
-  setTheme(next);
-  if (state.activeView === "evolution") renderEvolutionChart();
+/* =========================================================
+   ACTIONS ADMIN
+   ========================================================= */
+function requireAdmin() {
+  if (!state.userProfile?.isAdmin) {
+    throw new Error("Action réservée à l’administrateur.");
+  }
+}
+
+async function createParticipantByAdmin(name, email, password) {
+  requireAdmin();
+
+  if (!name || !email || !password) {
+    throw new Error("Nom, email et mot de passe sont obligatoires.");
+  }
+
+  alert("Pour créer un compte participant depuis l’interface admin avec email/mot de passe, le plus simple en client-side pur est que le participant utilise le bouton “Créer un compte”. Si tu veux une vraie création admin directe, il faudra passer par Firebase Admin SDK côté serveur ou Cloud Function.");
+}
+
+async function createMatchByAdmin(payload) {
+  requireAdmin();
+
+  const { competitionId, roundLabel, homeTeam, awayTeam, kickoff } = payload;
+
+  if (!competitionId || !homeTeam || !awayTeam || !kickoff) {
+    throw new Error("Tous les champs du match sont obligatoires.");
+  }
+
+  const kickoffDate = new Date(kickoff);
+  if (Number.isNaN(kickoffDate.getTime())) {
+    throw new Error("Date de match invalide.");
+  }
+
+  if (WEEKLY_LIMITED_COMPETITIONS.has(competitionId)) {
+    const targetWeek = weekKeyFromKickoff(kickoffDate);
+    const conflict = state.matches.find((m) => {
+      if (m.competitionId !== competitionId) return false;
+      return weekKeyFromKickoff(m.kickoff) === targetWeek;
+    });
+
+    if (conflict) {
+      throw new Error(`Un match est déjà programmé cette semaine pour ${getCompetitionLabel(competitionId)}.`);
+    }
+  }
+
+  await addDoc(collection(db, "matches"), {
+    competitionId,
+    roundLabel: roundLabel || "",
+    homeTeam,
+    awayTeam,
+    kickoff: Timestamp.fromDate(kickoffDate),
+    createdAt: serverTimestamp()
+  });
+}
+
+async function saveOfficialResult(matchId, homeScore, awayScore) {
+  try {
+    requireAdmin();
+
+    if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || homeScore < 0 || awayScore < 0) {
+      alert("Merci de saisir deux scores valides.");
+      return;
+    }
+
+    await updateDoc(doc(db, "matches", matchId), {
+      homeScore,
+      awayScore,
+      resultUpdatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    alertError(error, "Impossible d’enregistrer le résultat.");
+  }
+}
+
+async function deleteMatch(matchId) {
+  try {
+    requireAdmin();
+
+    const confirmed = window.confirm("Supprimer ce match ?");
+    if (!confirmed) return;
+
+    await deleteDoc(doc(db, "matches", matchId));
+
+    const linkedPredictions = state.predictions.filter((p) => p.matchId === matchId);
+    await Promise.all(linkedPredictions.map((pred) => deleteDoc(doc(db, "predictions", pred.id))));
+  } catch (error) {
+    alertError(error, "Impossible de supprimer le match.");
+  }
+}
+
+/* =========================================================
+   FORMULAIRES ADMIN
+   ========================================================= */
+dom.adminCreateUserForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    await createParticipantByAdmin(
+      dom.createUserName.value.trim(),
+      dom.createUserEmail.value.trim(),
+      dom.createUserPassword.value.trim()
+    );
+    dom.adminCreateUserForm.reset();
+  } catch (error) {
+    alertError(error, "Impossible de créer le participant.");
+  }
 });
 
-window.addEventListener("resize", () => {
-  if (state.activeView === "evolution") renderEvolutionChart();
+dom.adminCreateMatchForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  try {
+    await createMatchByAdmin({
+      competitionId: dom.adminMatchCompetition.value,
+      roundLabel: dom.adminMatchRound.value.trim(),
+      homeTeam: dom.adminMatchHome.value.trim(),
+      awayTeam: dom.adminMatchAway.value.trim(),
+      kickoff: dom.adminMatchKickoff.value
+    });
+
+    dom.adminCreateMatchForm.reset();
+  } catch (error) {
+    alertError(error, "Impossible d’ajouter le match.");
+  }
 });
 
-setTheme(state.theme);
-switchView("general");
+/* =========================================================
+   INIT
+   ========================================================= */
+setView("general");
+computeDerivedData();
+renderAll();
