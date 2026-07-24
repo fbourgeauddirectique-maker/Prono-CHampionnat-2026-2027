@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pronos Europe V2</title>
+  <title>Pronos Championnats 2026</title>
+
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -17,28 +17,28 @@
         <div class="brand-logo" aria-hidden="true">
           <svg viewBox="0 0 64 64" fill="none">
             <rect x="8" y="8" width="48" height="48" rx="14" stroke="currentColor" stroke-width="4"/>
-            <path d="M18 40L28 26L37 34L46 20" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="18" cy="40" r="3" fill="currentColor"/>
-            <circle cx="28" cy="26" r="3" fill="currentColor"/>
-            <circle cx="37" cy="34" r="3" fill="currentColor"/>
-            <circle cx="46" cy="20" r="3" fill="currentColor"/>
+            <path d="M20 39L29 24L37 33L44 22" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="20" cy="39" r="3" fill="currentColor"/>
+            <circle cx="29" cy="24" r="3" fill="currentColor"/>
+            <circle cx="37" cy="33" r="3" fill="currentColor"/>
+            <circle cx="44" cy="22" r="3" fill="currentColor"/>
           </svg>
         </div>
         <div>
-          <p class="eyebrow">Fantasy football</p>
-          <h1>Pronos Europe V2</h1>
+          <p class="eyebrow">Fantasy Football</p>
+          <h1>Pronos Europe</h1>
         </div>
       </div>
 
       <nav class="nav" aria-label="Navigation principale">
-        <button class="nav-link active" data-view="general">Classement général</button>
-        <button class="nav-link" data-view="ligue1">Ligue 1</button>
-        <button class="nav-link" data-view="liga">Liga</button>
-        <button class="nav-link" data-view="serieA">Serie A</button>
-        <button class="nav-link" data-view="premierLeague">Premier League</button>
-        <button class="nav-link" data-view="ldc">Ligue des Champions</button>
-        <button class="nav-link" data-view="evolution">Évolution</button>
-        <button class="nav-link" data-view="admin">Admin</button>
+        <button class="nav-link active" data-view="general" data-theme-competition="general">Classement général</button>
+        <button class="nav-link" data-view="ligue1" data-theme-competition="ligue1">Ligue 1</button>
+        <button class="nav-link" data-view="liga" data-theme-competition="liga">Liga</button>
+        <button class="nav-link" data-view="serieA" data-theme-competition="serieA">Serie A</button>
+        <button class="nav-link" data-view="premierLeague" data-theme-competition="premierLeague">Premier League</button>
+        <button class="nav-link" data-view="ldc" data-theme-competition="ldc">Ligue des Champions</button>
+        <button class="nav-link" data-view="evolution" data-theme-competition="general">Évolution</button>
+        <button class="nav-link" data-view="admin" data-theme-competition="admin">Admin</button>
       </nav>
 
       <div class="sidebar-footer">
@@ -49,44 +49,34 @@
           </button>
         </div>
 
-        <section class="auth-card">
+        <div class="user-box">
           <p id="auth-status">Non connecté</p>
-
-          <form id="login-form" class="auth-form auth-form-login">
-            <label>
-              Email
-              <input id="login-email" type="email" autocomplete="email" placeholder="email@exemple.com" />
-            </label>
-            <label>
-              Mot de passe
-              <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••" />
-            </label>
-            <button type="submit" class="btn btn-primary">Se connecter</button>
-          </form>
-
-          <form id="register-form" class="auth-form auth-form-register">
-            <label>
-              Nom affiché
-              <input id="register-name" type="text" autocomplete="name" placeholder="Ton nom" />
-            </label>
-            <label>
-              Email
-              <input id="register-email" type="email" autocomplete="email" placeholder="email@exemple.com" />
-            </label>
-            <label>
-              Mot de passe
-              <input id="register-password" type="password" autocomplete="new-password" placeholder="8 caractères minimum" />
-            </label>
-            <button type="submit" class="btn btn-secondary">Créer un compte</button>
-          </form>
-
-          <div class="auth-actions-inline">
-            <button id="google-login-btn" class="btn btn-ghost" type="button">Connexion Google</button>
-            <button id="logout-btn" class="btn btn-ghost hidden" type="button">Déconnexion</button>
+          <div class="auth-actions">
+            <button id="login-btn" class="btn btn-secondary">Connexion Google</button>
+            <button id="logout-btn" class="btn btn-ghost hidden">Déconnexion</button>
           </div>
 
-          <p id="auth-feedback" class="helper-text"></p>
-        </section>
+          <div class="auth-divider" style="margin: 16px 0; border-top: 1px solid var(--color-border);"></div>
+
+          <form id="email-auth-form" class="form-stack">
+            <label>
+              Email
+              <input id="auth-email" type="email" placeholder="nom@domaine.com" autocomplete="email" />
+            </label>
+
+            <label>
+              Mot de passe
+              <input id="auth-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+            </label>
+
+            <div class="auth-actions">
+              <button type="button" id="signup-btn" class="btn btn-secondary">Créer un compte</button>
+              <button type="button" id="signin-btn" class="btn btn-primary">Se connecter</button>
+            </div>
+
+            <p id="email-auth-feedback" class="helper-text"></p>
+          </form>
+        </div>
       </div>
     </aside>
 
@@ -97,7 +87,7 @@
           <h2 id="page-title">Classement général</h2>
         </div>
         <div class="topbar-actions">
-          <span class="status-pill" id="live-status">Initialisation…</span>
+          <span class="status-pill" id="live-status">Synchronisé</span>
         </div>
       </header>
 
@@ -107,16 +97,16 @@
             <div>
               <p class="eyebrow">Vue globale</p>
               <h3>Classement cumulé des 5 compétitions</h3>
-              <p>Les points sont calculés à partir des résultats officiels et mis à jour dès qu’un match est validé.</p>
+              <p>Ce tableau additionne Ligue 1, Liga, Serie A, Premier League et Ligue des Champions.</p>
             </div>
             <div class="hero-stats">
               <article class="mini-stat">
-                <span>Participants</span>
+                <span>Total participants</span>
                 <strong id="general-total-players">0</strong>
               </article>
               <article class="mini-stat">
-                <span>Matchs terminés</span>
-                <strong id="general-total-finished">0</strong>
+                <span>Total matchs pronostiqués</span>
+                <strong id="general-total-matches">0</strong>
               </article>
             </div>
           </div>
@@ -146,76 +136,231 @@
         </section>
 
         <section class="view" id="view-ligue1">
-          <div class="competition-header competition-ligue1"><div><p class="eyebrow">France</p><h3>Ligue 1</h3></div><p>Un seul match actif maximum par semaine.</p></div>
+          <div class="competition-header competition-ligue1">
+            <div>
+              <p class="eyebrow">France</p>
+              <h3>Ligue 1</h3>
+            </div>
+            <p>Un match par semaine à pronostiquer.</p>
+          </div>
           <div class="grid-2">
-            <section class="panel"><div class="panel-head"><h3>Matchs à pronostiquer</h3></div><div id="ligue1-matches" class="matches-list"></div></section>
-            <section class="panel"><div class="panel-head"><h3>Classement Ligue 1</h3></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Participant</th><th>Points</th><th>Pronos</th></tr></thead><tbody id="ligue1-ranking-body"></tbody></table></div></section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Match à pronostiquer</h3>
+              </div>
+              <div id="ligue1-matches" class="matches-list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Classement Ligue 1</h3>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Participant</th>
+                      <th>Points</th>
+                      <th>Pronos</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ligue1-ranking-body"></tbody>
+                </table>
+              </div>
+            </section>
           </div>
         </section>
 
         <section class="view" id="view-liga">
-          <div class="competition-header competition-liga"><div><p class="eyebrow">Espagne</p><h3>Liga</h3></div><p>Un seul match actif maximum par semaine.</p></div>
+          <div class="competition-header competition-liga">
+            <div>
+              <p class="eyebrow">Espagne</p>
+              <h3>Liga</h3>
+            </div>
+            <p>Un match par semaine à pronostiquer.</p>
+          </div>
           <div class="grid-2">
-            <section class="panel"><div class="panel-head"><h3>Matchs à pronostiquer</h3></div><div id="liga-matches" class="matches-list"></div></section>
-            <section class="panel"><div class="panel-head"><h3>Classement Liga</h3></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Participant</th><th>Points</th><th>Pronos</th></tr></thead><tbody id="liga-ranking-body"></tbody></table></div></section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Match à pronostiquer</h3>
+              </div>
+              <div id="liga-matches" class="matches-list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Classement Liga</h3>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Participant</th>
+                      <th>Points</th>
+                      <th>Pronos</th>
+                    </tr>
+                  </thead>
+                  <tbody id="liga-ranking-body"></tbody>
+                </table>
+              </div>
+            </section>
           </div>
         </section>
 
         <section class="view" id="view-serieA">
-          <div class="competition-header competition-serieA"><div><p class="eyebrow">Italie</p><h3>Serie A</h3></div><p>Un seul match actif maximum par semaine.</p></div>
+          <div class="competition-header competition-serieA">
+            <div>
+              <p class="eyebrow">Italie</p>
+              <h3>Serie A</h3>
+            </div>
+            <p>Un match par semaine à pronostiquer.</p>
+          </div>
           <div class="grid-2">
-            <section class="panel"><div class="panel-head"><h3>Matchs à pronostiquer</h3></div><div id="serieA-matches" class="matches-list"></div></section>
-            <section class="panel"><div class="panel-head"><h3>Classement Serie A</h3></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Participant</th><th>Points</th><th>Pronos</th></tr></thead><tbody id="serieA-ranking-body"></tbody></table></div></section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Match à pronostiquer</h3>
+              </div>
+              <div id="serieA-matches" class="matches-list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Classement Serie A</h3>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Participant</th>
+                      <th>Points</th>
+                      <th>Pronos</th>
+                    </tr>
+                  </thead>
+                  <tbody id="serieA-ranking-body"></tbody>
+                </table>
+              </div>
+            </section>
           </div>
         </section>
 
         <section class="view" id="view-premierLeague">
-          <div class="competition-header competition-premierLeague"><div><p class="eyebrow">Angleterre</p><h3>Premier League</h3></div><p>Un seul match actif maximum par semaine.</p></div>
+          <div class="competition-header competition-premierLeague">
+            <div>
+              <p class="eyebrow">Angleterre</p>
+              <h3>Premier League</h3>
+            </div>
+            <p>Un match par semaine à pronostiquer.</p>
+          </div>
           <div class="grid-2">
-            <section class="panel"><div class="panel-head"><h3>Matchs à pronostiquer</h3></div><div id="premierLeague-matches" class="matches-list"></div></section>
-            <section class="panel"><div class="panel-head"><h3>Classement Premier League</h3></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Participant</th><th>Points</th><th>Pronos</th></tr></thead><tbody id="premierLeague-ranking-body"></tbody></table></div></section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Match à pronostiquer</h3>
+              </div>
+              <div id="premierLeague-matches" class="matches-list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Classement Premier League</h3>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Participant</th>
+                      <th>Points</th>
+                      <th>Pronos</th>
+                    </tr>
+                  </thead>
+                  <tbody id="premierLeague-ranking-body"></tbody>
+                </table>
+              </div>
+            </section>
           </div>
         </section>
 
         <section class="view" id="view-ldc">
-          <div class="competition-header competition-ldc"><div><p class="eyebrow">Europe</p><h3>Ligue des Champions</h3></div><p>Plusieurs matchs peuvent être actifs la même semaine.</p></div>
+          <div class="competition-header competition-ldc">
+            <div>
+              <p class="eyebrow">Europe</p>
+              <h3>Ligue des Champions</h3>
+            </div>
+            <p>Tous les matchs sélectionnés sont pronostiquables.</p>
+          </div>
           <div class="grid-2">
-            <section class="panel"><div class="panel-head"><h3>Matchs à pronostiquer</h3></div><div id="ldc-matches" class="matches-list"></div></section>
-            <section class="panel"><div class="panel-head"><h3>Classement LDC</h3></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Participant</th><th>Points</th><th>Pronos</th></tr></thead><tbody id="ldc-ranking-body"></tbody></table></div></section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Matchs à pronostiquer</h3>
+              </div>
+              <div id="ldc-matches" class="matches-list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Classement LDC</h3>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Participant</th>
+                      <th>Points</th>
+                      <th>Pronos</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ldc-ranking-body"></tbody>
+                </table>
+              </div>
+            </section>
           </div>
         </section>
 
         <section class="view" id="view-evolution">
           <div class="competition-header competition-general">
             <div>
-              <p class="eyebrow">Historique</p>
+              <p class="eyebrow">Analyse</p>
               <h3>Évolution des participants</h3>
             </div>
-            <p>Choisis un ou plusieurs participants pour comparer leur progression match après match.</p>
+            <p>Courbes de progression cumulée sur l’ensemble des compétitions.</p>
           </div>
-          <div class="grid-evolution">
-            <section class="panel">
-              <div class="panel-head"><h3>Sélection des participants</h3></div>
-              <div id="evolution-player-filters" class="filters-list"></div>
-            </section>
-            <section class="panel chart-panel">
-              <div class="panel-head"><h3>Courbes d'évolution</h3></div>
-              <canvas id="evolution-chart" height="130"></canvas>
-            </section>
-          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Graphique d’évolution</h3>
+            </div>
+            <div class="table-wrap">
+              <canvas id="evolution-chart" width="1200" height="520" aria-label="Graphique d'évolution des participants" role="img"></canvas>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Lecture rapide</h3>
+            </div>
+            <p class="helper-text">
+              Chaque courbe correspond à un participant et additionne ses points au fil des matchs terminés.
+            </p>
+          </section>
         </section>
 
         <section class="view" id="view-admin">
           <div class="competition-header competition-admin">
-            <div><p class="eyebrow">Gestion</p><h3>Administration</h3></div>
-            <p>Création des matchs, activation hebdomadaire et saisie des résultats officiels.</p>
+            <div>
+              <p class="eyebrow">Gestion</p>
+              <h3>Administration</h3>
+            </div>
+            <p>Ajout, ouverture et résultat des matchs.</p>
           </div>
 
           <div class="grid-admin">
             <section class="panel">
-              <div class="panel-head"><h3>Créer un match</h3></div>
+              <div class="panel-head">
+                <h3>Créer un match</h3>
+              </div>
+
               <form id="admin-match-form" class="form-stack">
-                <label>Compétition
+                <label>
+                  Compétition
                   <select id="admin-competition" required>
                     <option value="ligue1">Ligue 1</option>
                     <option value="liga">Liga</option>
@@ -224,34 +369,44 @@
                     <option value="ldc">Ligue des Champions</option>
                   </select>
                 </label>
-                <label>Semaine / journée
-                  <input id="admin-round" type="text" required placeholder="Ex : Semaine 3" />
+
+                <label>
+                  Journée / semaine
+                  <input id="admin-round" type="text" placeholder="Ex: Semaine 1" required />
                 </label>
-                <label>Clé semaine
-                  <input id="admin-week-key" type="text" required placeholder="Ex : 2026-W34" />
+
+                <label>
+                  Équipe domicile
+                  <input id="admin-home-team" type="text" placeholder="PSG" required />
                 </label>
-                <label>Équipe domicile
-                  <input id="admin-home-team" type="text" required placeholder="PSG" />
+
+                <label>
+                  Équipe extérieur
+                  <input id="admin-away-team" type="text" placeholder="OM" required />
                 </label>
-                <label>Équipe extérieur
-                  <input id="admin-away-team" type="text" required placeholder="OM" />
-                </label>
-                <label>Date du match
+
+                <label>
+                  Date du match
                   <input id="admin-kickoff" type="datetime-local" required />
                 </label>
-                <label>Activer maintenant
+
+                <label>
+                  Match pronostiquable
                   <select id="admin-enabled" required>
                     <option value="true">Oui</option>
                     <option value="false">Non</option>
                   </select>
                 </label>
-                <button type="submit" class="btn btn-primary">Enregistrer</button>
+
+                <button type="submit" class="btn btn-primary">Enregistrer le match</button>
                 <p id="admin-form-feedback" class="helper-text"></p>
               </form>
             </section>
 
             <section class="panel">
-              <div class="panel-head"><h3>Gérer les matchs</h3></div>
+              <div class="panel-head">
+                <h3>Résultats officiels</h3>
+              </div>
               <div id="admin-match-list" class="admin-match-list"></div>
             </section>
           </div>
@@ -260,7 +415,6 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
