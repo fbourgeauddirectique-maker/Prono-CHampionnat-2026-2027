@@ -36,6 +36,9 @@ const firebaseConfig = {
   appId: "REPLACE_ME"
 };
 
+/* Remplace cette valeur par ton vrai code admin */
+const ADMIN_SIGNUP_CODE = "DIRECTIQUE2026";
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -96,8 +99,12 @@ const dom = {
   btnOpenAuth: $("btn-open-auth"),
   btnLogout: $("btn-logout"),
   authDialog: $("auth-dialog"),
+  authName: $("auth-name"),
   authEmail: $("auth-email"),
   authPassword: $("auth-password"),
+  authRole: $("auth-role"),
+  authAdminCodeWrapper: $("auth-admin-code-wrapper"),
+  authAdminCode: $("auth-admin-code"),
   btnEmailLogin: $("btn-email-login"),
   btnEmailSignup: $("btn-email-signup"),
   themeToggle: $("theme-toggle"),
@@ -247,20 +254,7 @@ function alertError(error, fallback = "Une erreur est survenue.") {
 function ensureAuthMessageBox() {
   let box = document.getElementById("auth-feedback");
   if (box) return box;
-
-  const target = document.querySelector("#auth-dialog .form-stack");
-  if (!target) return null;
-
-  box = document.createElement("div");
-  box.id = "auth-feedback";
-  box.style.marginTop = "10px";
-  box.style.padding = "10px 12px";
-  box.style.borderRadius = "12px";
-  box.style.fontSize = "14px";
-  box.style.display = "none";
-  target.appendChild(box);
-
-  return box;
+  return null;
 }
 
 function setAuthFeedback(message, type = "error") {
@@ -268,34 +262,14 @@ function setAuthFeedback(message, type = "error") {
   if (!box) return;
 
   if (!message) {
-    box.style.display = "none";
+    box.classList.remove("is-visible");
     box.textContent = "";
+    box.setAttribute("data-type", "info");
     return;
   }
 
-  const styles = {
-    error: {
-      bg: "rgba(168,47,72,.12)",
-      border: "1px solid rgba(168,47,72,.28)",
-      color: "#b4234d"
-    },
-    success: {
-      bg: "rgba(45,122,53,.12)",
-      border: "1px solid rgba(45,122,53,.28)",
-      color: "#246a2d"
-    },
-    info: {
-      bg: "rgba(13,107,115,.12)",
-      border: "1px solid rgba(13,107,115,.28)",
-      color: "#0d6b73"
-    }
-  };
-
-  const style = styles[type] || styles.error;
-  box.style.display = "block";
-  box.style.background = style.bg;
-  box.style.border = style.border;
-  box.style.color = style.color;
+  box.classList.add("is-visible");
+  box.setAttribute("data-type", type);
   box.textContent = message;
 }
 
@@ -374,18 +348,23 @@ document.querySelectorAll(".nav-link").forEach((btn) => {
 /* =========================================================
    AUTH
    ========================================================= */
-async function ensureUserProfile(user, fallbackName = "") {
+async function ensureUserProfile(user, fallbackName = "", forcedRole = null, forcedIsAdmin = null) {
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
 
   if (!snap.exists()) {
+    const role = forcedRole || "participant";
+    const isAdmin = forcedIsAdmin === true || role === "admin";
+
     const profile = {
       uid: user.uid,
       email: user.email || "",
       displayName: user.displayName || fallbackName || user.email?.split("@")[0] || "Participant",
-      isAdmin: false,
+      role,
+      isAdmin,
       createdAt: serverTimestamp()
     };
+
     await setDoc(ref, profile);
     return profile;
   }
@@ -430,11 +409,14 @@ async function loginWithEmail() {
 
 async function signupWithEmail() {
   try {
+    const name = dom.authName.value.trim();
     const email = dom.authEmail.value.trim();
     const password = dom.authPassword.value.trim();
+    const role = dom.authRole.value;
+    const adminCode = dom.authAdminCode.value.trim();
 
-    if (!email || !password) {
-      setAuthFeedback("Merci de remplir l’email et le mot de passe.", "error");
+    if (!name || !email || !password) {
+      setAuthFeedback("Merci de remplir le nom, l’email et le mot de passe.", "error");
       return;
     }
 
@@ -443,9 +425,21 @@ async function signupWithEmail() {
       return;
     }
 
+    if (role === "admin" && adminCode !== ADMIN_SIGNUP_CODE) {
+      setAuthFeedback("Code admin incorrect.", "error");
+      return;
+    }
+
     setAuthFeedback("Création du compte en cours…", "info");
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await ensureUserProfile(cred.user);
+
+    await ensureUserProfile(
+      cred.user,
+      name,
+      role,
+      role === "admin"
+    );
+
     setAuthFeedback("Compte créé avec succès.", "success");
 
     setTimeout(() => {
@@ -465,6 +459,16 @@ async function logoutUser() {
     alertError(error, "Déconnexion impossible.");
   }
 }
+
+function updateRoleFieldVisibility() {
+  const isAdminRole = dom.authRole?.value === "admin";
+  if (dom.authAdminCodeWrapper) {
+    dom.authAdminCodeWrapper.style.display = isAdminRole ? "grid" : "none";
+  }
+}
+
+dom.authRole?.addEventListener("change", updateRoleFieldVisibility);
+updateRoleFieldVisibility();
 
 dom.btnGoogleLogin?.addEventListener("click", loginWithGoogle);
 dom.btnOpenAuth?.addEventListener("click", () => {
@@ -491,7 +495,7 @@ onAuthStateChanged(auth, async (user) => {
 
   try {
     state.userProfile = await ensureUserProfile(user);
-    dom.authStatus.textContent = `${getDisplayName(state.userProfile)}${state.userProfile.isAdmin ? " · Admin" : ""}`;
+    dom.authStatus.textContent = `${getDisplayName(state.userProfile)}${state.userProfile.isAdmin ? " · Admin" : " · Participant"}`;
     dom.authLoggedOut.classList.add("hidden");
     dom.authLoggedIn.classList.remove("hidden");
   } catch (error) {
@@ -871,35 +875,10 @@ function renderAdminResults() {
 
 function renderAdminVisibility() {
   const isAdmin = !!state.userProfile?.isAdmin;
-  const adminView = document.getElementById("view-admin");
-  if (!adminView) return;
+  const info = document.getElementById("admin-access-message");
+  if (!info) return;
 
-  adminView.querySelectorAll("form, .admin-match-list").forEach((node) => {
-    node.style.pointerEvents = "auto";
-    node.style.opacity = "1";
-  });
-
-  let info = document.getElementById("admin-access-message");
-
-  if (!isAdmin) {
-    if (!info) {
-      info = document.createElement("div");
-      info.id = "admin-access-message";
-      info.className = "panel";
-      info.style.marginBottom = "16px";
-      info.innerHTML = `
-        <p class="eyebrow">Accès</p>
-        <h3>Zone visible, accès restreint</h3>
-        <p class="helper-text">
-          Tu peux voir l’onglet admin, mais seules les personnes avec <strong>isAdmin: true</strong>
-          dans Firestore peuvent enregistrer des actions.
-        </p>
-      `;
-      adminView.prepend(info);
-    }
-  } else if (info) {
-    info.remove();
-  }
+  info.style.display = isAdmin ? "none" : "block";
 }
 
 function renderAll() {
@@ -978,8 +957,7 @@ async function createParticipantByAdmin(name, email, password) {
 
   throw new Error(
     "La création directe d’un compte participant depuis l’onglet admin n’est pas encore activée dans cette version. " +
-    "Pour l’instant, le participant doit créer son compte via le bouton “Email / mot de passe”. " +
-    "Pour une vraie création admin, il faudra passer par une Cloud Function ou Firebase Admin SDK."
+    "Pour l’instant, le participant doit créer son compte via le popup d’inscription."
   );
 }
 
