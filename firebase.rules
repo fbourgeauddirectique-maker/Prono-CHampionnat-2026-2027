@@ -2,43 +2,234 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      return isSignedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
     }
 
-    function isOwnUser(uid) {
-      return isSignedIn() && request.auth.uid == uid;
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
     }
 
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isOwnUser(userId);
-      allow update: if isOwnUser(userId) || isAdmin();
-      allow delete: if isAdmin();
+    function currentUserIsAdmin() {
+      return signedIn()
+        && userDoc(request.auth.uid).exists()
+        && (
+          userDoc(request.auth.uid).data.isAdmin == true
+          || userDoc(request.auth.uid).data.role == "admin"
+        );
     }
 
+    function isValidRole(role) {
+      return role in ["participant", "admin"];
+    }
+
+    function validUserCreateFields() {
+      return request.resource.data.keys().hasOnly([
+        "uid",
+        "email",
+        "displayName",
+        "role",
+        "isAdmin",
+        "createdAt"
+      ]);
+    }
+
+    function validUserUpdateFields() {
+      return request.resource.data.keys().hasOnly([
+        "uid",
+        "email",
+        "displayName",
+        "role",
+        "isAdmin",
+        "createdAt"
+      ]);
+    }
+
+    function validPredictionFields() {
+      return request.resource.data.keys().hasOnly([
+        "matchId",
+        "competitionId",
+        "userId",
+        "predHome",
+        "predAway",
+        "createdAt",
+        "updatedAt"
+      ]);
+    }
+
+    function validMatchFields() {
+      return request.resource.data.keys().hasOnly([
+        "competitionId",
+        "roundLabel",
+        "homeTeam",
+        "awayTeam",
+        "kickoff",
+        "createdAt",
+        "homeScore",
+        "awayScore",
+        "resultUpdatedAt"
+      ]);
+    }
+
+    function isValidCompetitionId(comp) {
+      return comp in ["ligue1", "liga", "serieA", "premierLeague", "ldc"];
+    }
+
+    function isNonEmptyString(value) {
+      return value is string && value.size() > 0;
+    }
+
+    function isOptionalString(value) {
+      return !(value in request.resource.data) || value is string;
+    }
+
+    function canWritePredictionForMatch() {
+      return exists(/databases/$(database)/documents/matches/$(request.resource.data.matchId))
+        && get(/databases/$(database)/documents/matches/$(request.resource.data.matchId)).data.kickoff > request.time;
+    }
+
+    /* =========================
+       users
+       ========================= */
+    match /users/{uid} {
+      allow read: if true;
+
+      allow create: if isOwner(uid)
+        && validUserCreateFields()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && isNonEmptyString(request.resource.data.displayName)
+        && isValidRole(request.resource.data.role)
+        && request.resource.data.createdAt is timestamp
+        && (
+          (
+            request.resource.data.role == "participant"
+            && request.resource.data.isAdmin == false
+          )
+          ||
+          (
+            request.resource.data.role == "admin"
+            && request.resource.data.isAdmin == true
+          )
+        );
+
+      allow update: if
+        (
+          isOwner(uid)
+          && validUserUpdateFields()
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.isAdmin == resource.data.isAdmin
+          && isNonEmptyString(request.resource.data.displayName)
+        )
+        ||
+        (
+          currentUserIsAdmin()
+          && validUserUpdateFields()
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.createdAt == resource.data.createdAt
+          && isNonEmptyString(request.resource.data.displayName)
+          && isValidRole(request.resource.data.role)
+          && (
+            (
+              request.resource.data.role == "participant"
+              && request.resource.data.isAdmin == false
+            )
+            ||
+            (
+              request.resource.data.role == "admin"
+              && request.resource.data.isAdmin == true
+            )
+          )
+        );
+
+      allow delete: if currentUserIsAdmin();
+    }
+
+    /* =========================
+       matches
+       ========================= */
     match /matches/{matchId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+
+      allow create: if currentUserIsAdmin()
+        && validMatchFields()
+        && isValidCompetitionId(request.resource.data.competitionId)
+        && isOptionalString(request.resource.data.roundLabel)
+        && isNonEmptyString(request.resource.data.homeTeam)
+        && isNonEmptyString(request.resource.data.awayTeam)
+        && request.resource.data.kickoff is timestamp
+        && request.resource.data.createdAt is timestamp
+        && (
+          !("homeScore" in request.resource.data) || request.resource.data.homeScore is int
+        )
+        && (
+          !("awayScore" in request.resource.data) || request.resource.data.awayScore is int
+        )
+        && (
+          !("resultUpdatedAt" in request.resource.data) || request.resource.data.resultUpdatedAt is timestamp
+        );
+
+      allow update: if currentUserIsAdmin()
+        && validMatchFields()
+        && isValidCompetitionId(request.resource.data.competitionId)
+        && isOptionalString(request.resource.data.roundLabel)
+        && isNonEmptyString(request.resource.data.homeTeam)
+        && isNonEmptyString(request.resource.data.awayTeam)
+        && request.resource.data.kickoff is timestamp
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          !("homeScore" in request.resource.data) || request.resource.data.homeScore is int
+        )
+        && (
+          !("awayScore" in request.resource.data) || request.resource.data.awayScore is int
+        )
+        && (
+          !("resultUpdatedAt" in request.resource.data) || request.resource.data.resultUpdatedAt is timestamp
+        );
+
+      allow delete: if currentUserIsAdmin();
     }
 
+    /* =========================
+       predictions
+       ========================= */
     match /predictions/{predictionId} {
-      allow read: if isSignedIn();
-      allow create, update: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
-      allow delete: if isAdmin() || (
-        isSignedIn()
-        && resource.data.userId == request.auth.uid
-      );
-    }
+      allow read: if true;
 
-    allow read: if false;
-    allow write: if false;
+      allow create: if signedIn()
+        && validPredictionFields()
+        && request.resource.data.userId == request.auth.uid
+        && isValidCompetitionId(request.resource.data.competitionId)
+        && request.resource.data.predHome is int
+        && request.resource.data.predAway is int
+        && request.resource.data.predHome >= 0
+        && request.resource.data.predAway >= 0
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && canWritePredictionForMatch();
+
+      allow update: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.matchId == resource.data.matchId
+        && request.resource.data.competitionId == resource.data.competitionId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.predHome is int
+        && request.resource.data.predAway is int
+        && request.resource.data.predHome >= 0
+        && request.resource.data.predAway >= 0
+        && request.resource.data.updatedAt is timestamp
+        && canWritePredictionForMatch();
+
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+    }
   }
 }
