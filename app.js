@@ -61,8 +61,8 @@ const WEEKLY_LIMITED_COMPETITIONS = new Set([
 ]);
 
 const POINTS = {
-  exact: 3,
-  outcome: 1,
+  exact: 5,
+  outcome: 3,
   wrong: 0
 };
 
@@ -569,21 +569,23 @@ function computeDerivedData() {
 
   const scoreMap = new Map();
 
-  for (const user of state.users) {
-    const uid = user.id || user.uid;
-    scoreMap.set(uid, {
-      userId: uid,
-      displayName: getDisplayName(user),
-      competitions: {
-        ligue1: 0,
-        liga: 0,
-        serieA: 0,
-        premierLeague: 0,
-        ldc: 0
-      },
-      total: 0
-    });
-  }
+for (const user of state.users) {
+  if (user?.isAdmin) continue;
+
+  const uid = user.id || user.uid;
+  scoreMap.set(uid, {
+    userId: uid,
+    displayName: getDisplayName(user),
+    competitions: {
+      ligue1: 0,
+      liga: 0,
+      serieA: 0,
+      premierLeague: 0,
+      ldc: 0
+    },
+    total: 0
+  });
+}
 
   const evolutionBase = [];
   let finishedCounter = 0;
