@@ -3,430 +3,940 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Prono Multi-Championnats</title>
+  <title>Pronostics Multi-Championnats</title>
 
-  <link rel="preconnect" href="https://api.fontshare.com" />
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root,
+    [data-theme="light"] {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #f0f4fa;
+      --line: #dbe3ef;
+      --text: #172033;
+      --muted: #63708a;
+      --primary: #0d6b73;
+      --primary-dark: #0a565c;
+      --danger: #b4234d;
+      --danger-soft: rgba(180, 35, 77, 0.12);
+      --success: #246a2d;
+      --success-soft: rgba(36, 106, 45, 0.12);
+      --info: #0d6b73;
+      --info-soft: rgba(13, 107, 115, 0.12);
+      --shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
+      --radius: 18px;
+      --radius-sm: 12px;
+
+      --ligue1: linear-gradient(135deg, #1d4ed8 0%, #ffffff 48%, #ef4444 100%);
+      --liga: linear-gradient(135deg, #aa151b 0%, #f1bf00 100%);
+      --serieA: linear-gradient(135deg, #009246 0%, #ffffff 50%, #ce2b37 100%);
+      --premierLeague: linear-gradient(135deg, #012169 0%, #c8102e 100%);
+      --ldc: linear-gradient(135deg, #061a40 0%, #0a84ff 100%);
+      --general: linear-gradient(135deg, #0f766e 0%, #155e75 100%);
+      --admin: linear-gradient(135deg, #3b4252 0%, #111827 100%);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f1724;
+      --surface: #131c2b;
+      --surface-2: #192336;
+      --line: #2a354a;
+      --text: #e8edf7;
+      --muted: #9eabc2;
+      --primary: #4db4bc;
+      --primary-dark: #328f96;
+      --danger: #ff6b93;
+      --danger-soft: rgba(255, 107, 147, 0.14);
+      --success: #58c36b;
+      --success-soft: rgba(88, 195, 107, 0.14);
+      --info: #4db4bc;
+      --info-soft: rgba(77, 180, 188, 0.14);
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+      padding: 24px 18px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0d6b73 0%, #0a84ff 100%);
+      display: grid;
+      place-items: center;
+      color: white;
+      flex: 0 0 auto;
+      box-shadow: var(--shadow);
+    }
+
+    .brand-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .brand-subtitle {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .sidebar-section + .sidebar-section {
+      margin-top: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .helper-text {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .auth-status {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+
+    .auth-actions,
+    .stack-actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      min-height: 46px;
+      padding: 0 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .nav {
+      display: grid;
+      gap: 10px;
+    }
+
+    .nav-link {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      min-height: 52px;
+    }
+
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.08);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      opacity: 1;
+    }
+
+    .nav-general { background: var(--general); }
+    .nav-ligue1 { background: var(--ligue1); color: #101828; }
+    .nav-liga { background: var(--liga); }
+    .nav-serieA { background: var(--serieA); color: #101828; }
+    .nav-premierLeague { background: var(--premierLeague); }
+    .nav-ldc { background: var(--ldc); }
+    .nav-evolution { background: linear-gradient(135deg, #4338ca 0%, #0ea5e9 100%); }
+    .nav-admin { background: var(--admin); }
+
+    .main {
+      padding: 24px;
+      overflow: auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.2vw, 2rem);
+      line-height: 1.1;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .status-chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .stat-label {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .content-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .match-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .match-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .match-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .match-title {
+      margin: 0 0 4px;
+      font-weight: 800;
+      font-size: 1.02rem;
+    }
+
+    .match-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tag-open {
+      background: var(--info-soft);
+      color: var(--info);
+      border: 1px solid rgba(13,107,115,.2);
+    }
+
+    .tag-closed {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border: 1px solid rgba(180,35,77,.2);
+    }
+
+    .score-line {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin: 6px 0 12px;
+    }
+
+    .points-badge {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .prediction-form,
+    .admin-result-form,
+    .form-grid,
+    .form-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .prediction-form {
+      grid-template-columns: 1fr 1fr auto;
+      align-items: center;
+    }
+
+    .form-grid.two-cols {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 46px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      padding: 0 14px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(13, 107, 115, 0.12);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    th,
+    td {
+      padding: 14px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.95rem;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.84rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: var(--surface-2);
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .rank-first td {
+      background: rgba(255, 215, 0, 0.08);
+    }
+
+    .rank-me td {
+      background: rgba(13, 107, 115, 0.08);
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 420px;
+      margin-top: 12px;
+    }
+
+    .admin-layout {
+      display: grid;
+      gap: 20px;
+    }
+
+    .admin-access-box {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .admin-access-box h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+    }
+
+    .auth-feedback {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      border: 1px solid transparent;
+    }
+
+    .auth-feedback.is-visible {
+      display: block;
+    }
+
+    .auth-feedback[data-type="error"] {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border-color: rgba(180,35,77,.24);
+    }
+
+    .auth-feedback[data-type="success"] {
+      background: var(--success-soft);
+      color: var(--success);
+      border-color: rgba(36,106,45,.24);
+    }
+
+    .auth-feedback[data-type="info"] {
+      background: var(--info-soft);
+      color: var(--info);
+      border-color: rgba(13,107,115,.24);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    dialog {
+      border: 0;
+      border-radius: 20px;
+      padding: 0;
+      width: min(92vw, 460px);
+      background: transparent;
+    }
+
+    dialog::backdrop {
+      background: rgba(15, 23, 36, 0.46);
+      backdrop-filter: blur(3px);
+    }
+
+    .dialog-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .dialog-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .dialog-top h2 {
+      margin: 0 0 4px;
+      font-size: 1.2rem;
+    }
+
+    .dialog-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .dialog-footer {
+      margin-top: 12px;
+    }
+
+    @media (max-width: 1120px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .main {
+        padding: 16px;
+      }
+
+      .sidebar {
+        padding: 16px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .prediction-form,
+      .form-grid.two-cols {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .topbar-right {
+        width: 100%;
+      }
+
+      .topbar-right .btn,
+      .topbar-right .status-chip {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Aller au contenu</a>
-
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-logo" aria-hidden="true">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 2l7 4v12l-7 4-7-4V6l7-4Z"></path>
-            <path d="M9 9h6"></path>
-            <path d="M8.5 13h7"></path>
-            <path d="M10 17h4"></path>
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M8.5 9.5L12 7.5L15.5 9.5V14.5L12 16.5L8.5 14.5V9.5Z" fill="currentColor" opacity="0.9"/>
           </svg>
         </div>
         <div>
-          <p class="eyebrow">Pronostics football</p>
-          <h1>Prono Multi<br />Championnats</h1>
+          <div class="brand-title">Pronos Multi-Championnats</div>
+          <div class="brand-subtitle">Ligue 1 · Liga · Serie A · PL · LDC</div>
         </div>
       </div>
 
-      <nav class="nav" aria-label="Navigation principale">
-        <button class="nav-link active" data-view-target="general">Classement général</button>
-        <button class="nav-link" data-view-target="ligue1">Ligue 1</button>
-        <button class="nav-link" data-view-target="liga">Liga</button>
-        <button class="nav-link" data-view-target="serieA">Serie A</button>
-        <button class="nav-link" data-view-target="premierLeague">Premier League</button>
-        <button class="nav-link" data-view-target="ldc">Ligue des Champions</button>
-        <button class="nav-link" data-view-target="evolution">Évolution</button>
-        <button class="nav-link" data-view-target="admin">Admin</button>
-      </nav>
+      <section class="sidebar-section panel">
+        <p class="eyebrow">Compte</p>
+        <p class="auth-status" id="auth-status">Non connecté</p>
 
-      <div class="sidebar-footer">
-        <div class="theme-row">
-          <div>
-            <p class="eyebrow">Apparence</p>
-            <strong>Thème</strong>
-          </div>
-          <button id="theme-toggle" class="icon-btn" type="button" aria-label="Basculer le thème">
-            <span aria-hidden="true">◐</span>
-          </button>
-        </div>
-
-        <div class="user-box">
-          <p class="eyebrow">Compte</p>
-          <div id="auth-status">Non connecté</div>
-
-          <div class="auth-actions" id="auth-logged-out">
-            <button id="btn-google-login" class="btn btn-primary" type="button">Connexion Google</button>
-            <button id="btn-open-auth" class="btn btn-secondary" type="button">Email / mot de passe</button>
-          </div>
-
-          <div class="auth-actions hidden" id="auth-logged-in">
-            <button id="btn-logout" class="btn btn-secondary" type="button">Se déconnecter</button>
+        <div id="auth-logged-out">
+          <p class="helper-text">Connecte-toi pour enregistrer tes pronostics et suivre ton classement.</p>
+          <div class="auth-actions">
+            <button class="btn btn-primary" id="btn-google-login" type="button">Connexion Google</button>
+            <button class="btn btn-secondary" id="btn-open-auth" type="button">Email / mot de passe</button>
           </div>
         </div>
-      </div>
+
+        <div id="auth-logged-in" class="hidden">
+          <p class="helper-text">Tu es connecté. Tu peux enregistrer tes pronostics dans les onglets compétition.</p>
+          <div class="auth-actions">
+            <button class="btn btn-ghost" id="btn-logout" type="button">Se déconnecter</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="sidebar-section">
+        <nav class="nav" aria-label="Navigation principale">
+          <button class="nav-link nav-general active" data-view-target="general" type="button">Classement général</button>
+          <button class="nav-link nav-ligue1" data-view-target="ligue1" type="button">Ligue 1</button>
+          <button class="nav-link nav-liga" data-view-target="liga" type="button">Liga</button>
+          <button class="nav-link nav-serieA" data-view-target="serieA" type="button">Serie A</button>
+          <button class="nav-link nav-premierLeague" data-view-target="premierLeague" type="button">Premier League</button>
+          <button class="nav-link nav-ldc" data-view-target="ldc" type="button">Ligue des Champions</button>
+          <button class="nav-link nav-evolution" data-view-target="evolution" type="button">Évolution</button>
+          <button class="nav-link nav-admin" data-view-target="admin" type="button">Admin</button>
+        </nav>
+      </section>
     </aside>
 
-    <div class="content-shell">
+    <main class="main">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Saison de pronostics</p>
-          <h2 id="page-title">Classement général</h2>
+          <h1 id="page-title">Classement général</h1>
         </div>
 
-        <div class="topbar-actions">
-          <div class="status-pill">
-            <span aria-hidden="true">●</span>
-            <span id="sync-status">Synchronisé</span>
-          </div>
+        <div class="topbar-right">
+          <div class="status-chip" id="sync-status">Synchronisation…</div>
+          <button class="btn btn-ghost" id="theme-toggle" type="button">Mode clair / sombre</button>
         </div>
       </header>
 
-      <main id="main-content" class="main-content">
-        <!-- GENERAL -->
-        <section id="view-general" class="view active" data-view="general">
-          <section class="competition-header competition-general">
-            <p class="eyebrow">Vue globale</p>
-            <h3>Classement général</h3>
-            <p>Total cumulé des points sur Ligue 1, Liga, Serie A, Premier League et Ligue des Champions.</p>
+      <section class="stats-grid">
+        <article class="stat-card">
+          <p class="stat-label">Participants</p>
+          <p class="stat-value" id="stat-total-users">0</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">Matches terminés</p>
+          <p class="stat-value" id="stat-total-finished">0</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">Mon rang</p>
+          <p class="stat-value" id="stat-my-rank">-</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">Mes points</p>
+          <p class="stat-value" id="stat-my-points">0</p>
+        </article>
+      </section>
+
+      <section class="view active" id="view-general" data-view="general">
+        <div class="content-grid">
+          <article class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Ligue 1</th>
+                  <th>Liga</th>
+                  <th>Serie A</th>
+                  <th>Premier League</th>
+                  <th>LDC</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="ranking-general-body"></tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-ligue1" data-view="ligue1">
+        <div class="section-grid">
+          <article class="panel">
+            <h2 class="section-title">Matches à pronostiquer</h2>
+            <div class="match-list" id="matches-ligue1"></div>
+          </article>
+          <article class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody id="ranking-ligue1-body"></tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-liga" data-view="liga">
+        <div class="section-grid">
+          <article class="panel">
+            <h2 class="section-title">Matches à pronostiquer</h2>
+            <div class="match-list" id="matches-liga"></div>
+          </article>
+          <article class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody id="ranking-liga-body"></tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-serieA" data-view="serieA">
+        <div class="section-grid">
+          <article class="panel">
+            <h2 class="section-title">Matches à pronostiquer</h2>
+            <div class="match-list" id="matches-serieA"></div>
+          </article>
+          <article class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody id="ranking-serieA-body"></tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-premierLeague" data-view="premierLeague">
+        <div class="section-grid">
+          <article class="panel">
+            <h2 class="section-title">Matches à pronostiquer</h2>
+            <div class="match-list" id="matches-premierLeague"></div>
+          </article>
+          <article class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody id="ranking-premierLeague-body"></tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-ldc" data-view="ldc">
+        <div class="section-grid">
+          <article class="panel">
+            <h2 class="section-title">Matches à pronostiquer</h2>
+            <div class="match-list" id="matches-ldc"></div>
+          </article>
+          <article class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody id="ranking-ldc-body"></tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-evolution" data-view="evolution">
+        <article class="chart-card">
+          <p class="eyebrow">Progression</p>
+          <h2 class="section-title">Évolution des participants</h2>
+          <p class="helper-text">Sélectionne un ou plusieurs participants pour comparer l’évolution de leurs points après chaque match terminé.</p>
+
+          <div class="field" style="margin-top: 14px;">
+            <label for="evolution-player-select">Participants affichés</label>
+            <select id="evolution-player-select" multiple size="8"></select>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas id="evolution-chart"></canvas>
+          </div>
+        </article>
+      </section>
+
+      <section class="view" id="view-admin" data-view="admin">
+        <div class="admin-layout">
+          <section class="admin-access-box" id="admin-access-message">
+            <p class="eyebrow">Accès</p>
+            <h3>Zone visible, accès restreint</h3>
+            <p class="helper-text">
+              Cet onglet reste visible pour tout le monde, mais seules les personnes ayant
+              <strong>isAdmin: true</strong> dans Firestore peuvent réellement enregistrer des actions.
+            </p>
           </section>
 
-          <section class="hero-card competition-general">
-            <div>
-              <p class="eyebrow">Synthèse</p>
-              <h3>Vue d’ensemble des participants</h3>
-              <p>Retrouve ici les meilleurs scores cumulés, le nombre total de matchs joués et ta position actuelle.</p>
-            </div>
-            <div class="hero-stats">
-              <div class="mini-stat">
-                <span>Participants</span>
-                <strong id="stat-total-users">0</strong>
-              </div>
-              <div class="mini-stat">
-                <span>Matchs terminés</span>
-                <strong id="stat-total-finished">0</strong>
-              </div>
-              <div class="mini-stat">
-                <span>Mon rang</span>
-                <strong id="stat-my-rank">-</strong>
-              </div>
-              <div class="mini-stat">
-                <span>Mes points</span>
-                <strong id="stat-my-points">0</strong>
-              </div>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Classement cumulé</p>
-                <h3>Tableau général</h3>
-              </div>
-            </div>
-            <div class="table-wrap">
-              <table aria-label="Classement général">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Participant</th>
-                    <th>Ligue 1</th>
-                    <th>Liga</th>
-                    <th>Serie A</th>
-                    <th>Premier League</th>
-                    <th>LDC</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody id="ranking-general-body"></tbody>
-              </table>
-            </div>
-          </section>
-        </section>
-
-        <!-- LIGUE 1 -->
-        <section id="view-ligue1" class="view" data-view="ligue1">
-          <section class="competition-header competition-ligue1">
-            <p class="eyebrow">France</p>
-            <h3>Ligue 1</h3>
-            <p>Un match à pronostiquer par semaine, avec classement spécifique et suivi des points.</p>
-          </section>
-
-          <section class="grid-2">
+          <div class="section-grid">
             <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Pronostics</p>
-                  <h3>Matchs à pronostiquer</h3>
-                </div>
-              </div>
-              <div id="matches-ligue1" class="matches-list"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Classement</p>
-                  <h3>Ligue 1</h3>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table aria-label="Classement Ligue 1">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Participant</th>
-                      <th>Points</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ranking-ligue1-body"></tbody>
-                </table>
-              </div>
-            </article>
-          </section>
-        </section>
-
-        <!-- LIGA -->
-        <section id="view-liga" class="view" data-view="liga">
-          <section class="competition-header competition-liga">
-            <p class="eyebrow">Espagne</p>
-            <h3>Liga</h3>
-            <p>Un match à pronostiquer par semaine, avec tableau de classement indépendant.</p>
-          </section>
-
-          <section class="grid-2">
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Pronostics</p>
-                  <h3>Matchs à pronostiquer</h3>
-                </div>
-              </div>
-              <div id="matches-liga" class="matches-list"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Classement</p>
-                  <h3>Liga</h3>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table aria-label="Classement Liga">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Participant</th>
-                      <th>Points</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ranking-liga-body"></tbody>
-                </table>
-              </div>
-            </article>
-          </section>
-        </section>
-
-        <!-- SERIE A -->
-        <section id="view-serieA" class="view" data-view="serieA">
-          <section class="competition-header competition-serieA">
-            <p class="eyebrow">Italie</p>
-            <h3>Serie A</h3>
-            <p>Un match par semaine, avec classement dédié et saisie des scores participant.</p>
-          </section>
-
-          <section class="grid-2">
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Pronostics</p>
-                  <h3>Matchs à pronostiquer</h3>
-                </div>
-              </div>
-              <div id="matches-serieA" class="matches-list"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Classement</p>
-                  <h3>Serie A</h3>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table aria-label="Classement Serie A">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Participant</th>
-                      <th>Points</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ranking-serieA-body"></tbody>
-                </table>
-              </div>
-            </article>
-          </section>
-        </section>
-
-        <!-- PREMIER LEAGUE -->
-        <section id="view-premierLeague" class="view" data-view="premierLeague">
-          <section class="competition-header competition-premierLeague">
-            <p class="eyebrow">Angleterre</p>
-            <h3>Premier League</h3>
-            <p>Un match par semaine, avec classement spécifique et cumul dans le général.</p>
-          </section>
-
-          <section class="grid-2">
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Pronostics</p>
-                  <h3>Matchs à pronostiquer</h3>
-                </div>
-              </div>
-              <div id="matches-premierLeague" class="matches-list"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Classement</p>
-                  <h3>Premier League</h3>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table aria-label="Classement Premier League">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Participant</th>
-                      <th>Points</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ranking-premierLeague-body"></tbody>
-                </table>
-              </div>
-            </article>
-          </section>
-        </section>
-
-        <!-- LDC -->
-        <section id="view-ldc" class="view" data-view="ldc">
-          <section class="competition-header competition-ldc">
-            <p class="eyebrow">Europe</p>
-            <h3>Ligue des Champions</h3>
-            <p>Tous les matchs sélectionnés sont pronostiquables, avec classement dédié.</p>
-          </section>
-
-          <section class="grid-2">
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Pronostics</p>
-                  <h3>Matchs à pronostiquer</h3>
-                </div>
-              </div>
-              <div id="matches-ldc" class="matches-list"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Classement</p>
-                  <h3>Ligue des Champions</h3>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table aria-label="Classement Ligue des Champions">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Participant</th>
-                      <th>Points</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ranking-ldc-body"></tbody>
-                </table>
-              </div>
-            </article>
-          </section>
-        </section>
-
-        <!-- EVOLUTION -->
-        <section id="view-evolution" class="view" data-view="evolution">
-          <section class="competition-header competition-general">
-            <p class="eyebrow">Historique</p>
-            <h3>Évolution des participants</h3>
-            <p>Compare la progression cumulée des joueurs après chaque match terminé.</p>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Courbes</p>
-                <h3>Évolution des scores</h3>
-              </div>
-            </div>
-
-            <div class="form-stack" style="margin-bottom:16px;">
-              <label for="evolution-player-select">Choisir un ou plusieurs participants</label>
-              <select id="evolution-player-select" multiple size="8"></select>
-            </div>
-
-            <canvas id="evolution-chart" aria-label="Graphique d'évolution des scores"></canvas>
-          </section>
-        </section>
-
-        <!-- ADMIN -->
-        <section id="view-admin" class="view" data-view="admin">
-          <section class="competition-header competition-admin">
-            <p class="eyebrow">Administration</p>
-            <h3>Gestion des matchs et participants</h3>
-            <p>Créer les matchs manuellement, saisir les résultats et gérer les comptes participants.</p>
-          </section>
-
-          <section class="grid-admin">
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Comptes</p>
-                  <h3>Créer un participant</h3>
-                </div>
-              </div>
+              <p class="eyebrow">Admin</p>
+              <h2 class="section-title">Créer un participant</h2>
+              <p class="helper-text" style="margin-bottom: 14px;">
+                Dans cette version front-only, la création directe d’un compte depuis l’admin n’est pas encore finalisée.
+              </p>
 
               <form id="admin-create-user-form" class="form-stack">
-                <label>
-                  Nom affiché
+                <div class="field">
+                  <label for="create-user-name">Nom du participant</label>
                   <input id="create-user-name" type="text" placeholder="Ex. Julien" />
-                </label>
-
-                <label>
-                  Email
-                  <input id="create-user-email" type="email" placeholder="participant@email.com" />
-                </label>
-
-                <label>
-                  Mot de passe
-                  <input id="create-user-password" type="password" placeholder="Mot de passe" />
-                </label>
-
+                </div>
+                <div class="field">
+                  <label for="create-user-email">Email</label>
+                  <input id="create-user-email" type="email" placeholder="exemple@mail.com" />
+                </div>
+                <div class="field">
+                  <label for="create-user-password">Mot de passe</label>
+                  <input id="create-user-password" type="password" placeholder="Minimum 6 caractères" />
+                </div>
                 <button class="btn btn-primary" type="submit">Créer le participant</button>
               </form>
             </article>
 
             <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Matchs</p>
-                  <h3>Ajouter un match</h3>
-                </div>
-              </div>
+              <p class="eyebrow">Admin</p>
+              <h2 class="section-title">Ajouter un match</h2>
 
-              <form id="admin-create-match-form" class="form-stack">
-                <label>
-                  Compétition
+              <form id="admin-create-match-form" class="form-grid two-cols">
+                <div class="field">
+                  <label for="admin-match-competition">Compétition</label>
                   <select id="admin-match-competition">
                     <option value="ligue1">Ligue 1</option>
                     <option value="liga">Liga</option>
@@ -434,80 +944,86 @@
                     <option value="premierLeague">Premier League</option>
                     <option value="ldc">Ligue des Champions</option>
                   </select>
-                </label>
+                </div>
 
-                <label>
-                  Semaine / journée
-                  <input id="admin-match-round" type="text" placeholder="Ex. Semaine 1 / J1 / Phase 1" />
-                </label>
+                <div class="field">
+                  <label for="admin-match-round">Journée / phase</label>
+                  <input id="admin-match-round" type="text" placeholder="Ex. J3 / Phase de ligue" />
+                </div>
 
-                <label>
-                  Équipe domicile
-                  <input id="admin-match-home" type="text" placeholder="Ex. Marseille" />
-                </label>
+                <div class="field">
+                  <label for="admin-match-home">Équipe domicile</label>
+                  <input id="admin-match-home" type="text" placeholder="Ex. PSG" />
+                </div>
 
-                <label>
-                  Équipe extérieur
-                  <input id="admin-match-away" type="text" placeholder="Ex. Lyon" />
-                </label>
+                <div class="field">
+                  <label for="admin-match-away">Équipe extérieur</label>
+                  <input id="admin-match-away" type="text" placeholder="Ex. OM" />
+                </div>
 
-                <label>
-                  Date et heure du match
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label for="admin-match-kickoff">Date et heure du match</label>
                   <input id="admin-match-kickoff" type="datetime-local" />
-                </label>
+                </div>
 
-                <button class="btn btn-primary" type="submit">Ajouter le match</button>
+                <div style="grid-column: 1 / -1;">
+                  <button class="btn btn-primary" type="submit">Ajouter le match</button>
+                </div>
               </form>
             </article>
-          </section>
+          </div>
 
-          <section class="panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Résultats</p>
-                <h3>Saisir les scores officiels</h3>
-              </div>
-            </div>
-
-            <div id="admin-results-list" class="admin-match-list"></div>
-          </section>
-        </section>
-      </main>
-    </div>
+          <article class="panel">
+            <p class="eyebrow">Admin</p>
+            <h2 class="section-title">Résultats officiels</h2>
+            <p class="helper-text" style="margin-bottom: 14px;">
+              Renseigne les scores finaux pour recalculer automatiquement les points et les classements.
+            </p>
+            <div class="match-list admin-match-list" id="admin-results-list"></div>
+          </article>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <!-- Modal auth email/password -->
   <dialog id="auth-dialog">
-    <form method="dialog" class="panel" style="max-width:420px; width:min(92vw,420px); margin:auto;">
-      <div class="panel-head">
+    <div class="dialog-card">
+      <div class="dialog-top">
         <div>
-          <p class="eyebrow">Connexion</p>
-          <h3>Email / mot de passe</h3>
+          <h2>Connexion email</h2>
+          <p class="helper-text">Connecte-toi ou crée ton compte participant avec ton email et ton mot de passe.</p>
         </div>
+        <button class="dialog-close" type="button" onclick="document.getElementById('auth-dialog').close()">✕</button>
       </div>
 
-      <div class="form-stack">
-        <label>
-          Email
-          <input id="auth-email" type="email" placeholder="email@exemple.com" />
-        </label>
-
-        <label>
-          Mot de passe
-          <input id="auth-password" type="password" placeholder="Mot de passe" />
-        </label>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <button id="btn-email-login" class="btn btn-primary" type="button">Se connecter</button>
-          <button id="btn-email-signup" class="btn btn-secondary" type="button">Créer un compte</button>
+      <form method="dialog" class="form-stack" onsubmit="return false;">
+        <div class="field">
+          <label for="auth-email">Email</label>
+          <input id="auth-email" type="email" placeholder="ton@email.com" autocomplete="email" />
         </div>
 
-        <button class="btn btn-ghost" value="cancel">Fermer</button>
-      </div>
-    </form>
+        <div class="field">
+          <label for="auth-password">Mot de passe</label>
+          <input id="auth-password" type="password" placeholder="Minimum 6 caractères" autocomplete="current-password" />
+        </div>
+
+        <div id="auth-feedback" class="auth-feedback" data-type="info" aria-live="polite"></div>
+
+        <div class="stack-actions">
+          <button class="btn btn-primary" id="btn-email-login" type="button">Se connecter</button>
+          <button class="btn btn-secondary" id="btn-email-signup" type="button">Créer un compte</button>
+        </div>
+
+        <div class="dialog-footer">
+          <p class="helper-text">
+            Si rien ne se passe d’habitude, cette zone affichera maintenant un message clair :
+            email invalide, mot de passe trop court, email déjà utilisé, provider non activé, etc.
+          </p>
+        </div>
+      </form>
+    </div>
   </dialog>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
