@@ -7,7 +7,11 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -17,8 +21,8 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="currentColor" stroke-width="1.8"/>
-            <path d="M8.5 9.5L12 7.5L15.5 9.5V14.5L12 16.5L8.5 14.5V9.5Z" fill="currentColor" opacity="0.9"/>
+            <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" stroke="currentColor" stroke-width="1.8"></path>
+            <path d="M8.5 9.5L12 7.5L15.5 9.5V14.5L12 16.5L8.5 14.5V9.5Z" fill="currentColor" opacity="0.9"></path>
           </svg>
         </div>
         <div>
@@ -32,15 +36,19 @@
         <p class="auth-status" id="auth-status">Non connecté</p>
 
         <div id="auth-logged-out">
-          <p class="helper-text">Connecte-toi pour enregistrer tes pronostics et suivre ton classement.</p>
+          <p class="helper-text">
+            Connecte-toi pour enregistrer tes pronostics et suivre ton classement.
+          </p>
           <div class="auth-actions">
             <button class="btn btn-primary" id="btn-google-login" type="button">Connexion Google</button>
-            <button class="btn btn-secondary" id="btn-open-auth" type="button">Email / mot de passe</button>
+            <button class="btn btn-secondary" id="btn-open-auth" type="button">Email & mot de passe</button>
           </div>
         </div>
 
         <div id="auth-logged-in" class="hidden">
-          <p class="helper-text">Tu es connecté. Tu peux enregistrer tes pronostics dans les onglets compétition.</p>
+          <p class="helper-text">
+            Tu es connecté. Tu peux enregistrer tes pronostics dans les onglets compétition.
+          </p>
           <div class="auth-actions">
             <button class="btn btn-ghost" id="btn-logout" type="button">Se déconnecter</button>
           </div>
@@ -64,7 +72,7 @@
     <main class="main">
       <header class="topbar">
         <div>
-          <h1 id="page-title">Classement général</h1>
+          <h1 id="page-title" class="page-title page-title-general">Classement général</h1>
         </div>
 
         <div class="topbar-right">
@@ -78,14 +86,17 @@
           <p class="stat-label">Participants</p>
           <p class="stat-value" id="stat-total-users">0</p>
         </article>
+
         <article class="stat-card">
           <p class="stat-label">Matches terminés</p>
           <p class="stat-value" id="stat-total-finished">0</p>
         </article>
+
         <article class="stat-card">
           <p class="stat-label">Mon rang</p>
           <p class="stat-value" id="stat-my-rank">-</p>
         </article>
+
         <article class="stat-card">
           <p class="stat-label">Mes points</p>
           <p class="stat-value" id="stat-my-points">0</p>
@@ -120,10 +131,15 @@
             <h2 class="section-title">Matches à pronostiquer</h2>
             <div class="match-list" id="matches-ligue1"></div>
           </article>
+
           <article class="table-wrap">
             <table>
               <thead>
-                <tr><th>#</th><th>Participant</th><th>Points</th></tr>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                </tr>
               </thead>
               <tbody id="ranking-ligue1-body"></tbody>
             </table>
@@ -137,10 +153,15 @@
             <h2 class="section-title">Matches à pronostiquer</h2>
             <div class="match-list" id="matches-liga"></div>
           </article>
+
           <article class="table-wrap">
             <table>
               <thead>
-                <tr><th>#</th><th>Participant</th><th>Points</th></tr>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                </tr>
               </thead>
               <tbody id="ranking-liga-body"></tbody>
             </table>
@@ -154,10 +175,15 @@
             <h2 class="section-title">Matches à pronostiquer</h2>
             <div class="match-list" id="matches-serieA"></div>
           </article>
+
           <article class="table-wrap">
             <table>
               <thead>
-                <tr><th>#</th><th>Participant</th><th>Points</th></tr>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                </tr>
               </thead>
               <tbody id="ranking-serieA-body"></tbody>
             </table>
@@ -171,10 +197,15 @@
             <h2 class="section-title">Matches à pronostiquer</h2>
             <div class="match-list" id="matches-premierLeague"></div>
           </article>
+
           <article class="table-wrap">
             <table>
               <thead>
-                <tr><th>#</th><th>Participant</th><th>Points</th></tr>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                </tr>
               </thead>
               <tbody id="ranking-premierLeague-body"></tbody>
             </table>
@@ -188,10 +219,15 @@
             <h2 class="section-title">Matches à pronostiquer</h2>
             <div class="match-list" id="matches-ldc"></div>
           </article>
+
           <article class="table-wrap">
             <table>
               <thead>
-                <tr><th>#</th><th>Participant</th><th>Points</th></tr>
+                <tr>
+                  <th>#</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                </tr>
               </thead>
               <tbody id="ranking-ldc-body"></tbody>
             </table>
@@ -203,7 +239,9 @@
         <article class="chart-card">
           <p class="eyebrow">Progression</p>
           <h2 class="section-title">Évolution des participants</h2>
-          <p class="helper-text">Sélectionne un ou plusieurs participants pour comparer l’évolution de leurs points après chaque match terminé.</p>
+          <p class="helper-text">
+            Sélectionne un ou plusieurs participants pour comparer l’évolution de leurs points après chaque match terminé.
+          </p>
 
           <div class="field" style="margin-top: 14px;">
             <label for="evolution-player-select">Participants affichés</label>
@@ -240,14 +278,17 @@
                   <label for="create-user-name">Nom du participant</label>
                   <input id="create-user-name" type="text" placeholder="Ex. Julien" />
                 </div>
+
                 <div class="field">
                   <label for="create-user-email">Email</label>
                   <input id="create-user-email" type="email" placeholder="exemple@mail.com" />
                 </div>
+
                 <div class="field">
                   <label for="create-user-password">Mot de passe</label>
                   <input id="create-user-password" type="password" placeholder="Minimum 6 caractères" />
                 </div>
+
                 <button class="btn btn-primary" type="submit">Créer le participant</button>
               </form>
             </article>
@@ -315,7 +356,13 @@
           <h2>Connexion / inscription</h2>
           <p class="helper-text">Connecte-toi ou crée ton compte avec le rôle de ton choix.</p>
         </div>
-        <button class="dialog-close" type="button" onclick="document.getElementById('auth-dialog').close()">✕</button>
+        <button
+          class="dialog-close"
+          type="button"
+          onclick="document.getElementById('auth-dialog').close()"
+        >
+          ×
+        </button>
       </div>
 
       <form method="dialog" class="form-stack" onsubmit="return false;">
@@ -342,7 +389,7 @@
           </select>
         </div>
 
-        <div class="field" id="auth-admin-code-wrapper" style="display:none;">
+        <div class="field" id="auth-admin-code-wrapper" style="display: none;">
           <label for="auth-admin-code">Code admin</label>
           <input id="auth-admin-code" type="password" placeholder="Code admin" />
         </div>
