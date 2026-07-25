@@ -61,8 +61,8 @@ const WEEKLY_LIMITED_COMPETITIONS = new Set([
 ]);
 
 const POINTS = {
-  exact: 5,
-  outcome: 3,
+  exact: 3,
+  outcome: 1,
   wrong: 0
 };
 
@@ -143,6 +143,8 @@ const dom = {
   adminMatchAway: $("admin-match-away"),
   adminMatchKickoff: $("admin-match-kickoff"),
   adminResultsList: $("admin-results-list")
+  adminNavButton: document.querySelector('.nav-link[data-view-target="admin"]'),
+  adminView: document.getElementById("view-admin")
 };
 
 /* =========================================================
@@ -569,23 +571,21 @@ function computeDerivedData() {
 
   const scoreMap = new Map();
 
-for (const user of state.users) {
-  if (user?.isAdmin) continue;
-
-  const uid = user.id || user.uid;
-  scoreMap.set(uid, {
-    userId: uid,
-    displayName: getDisplayName(user),
-    competitions: {
-      ligue1: 0,
-      liga: 0,
-      serieA: 0,
-      premierLeague: 0,
-      ldc: 0
-    },
-    total: 0
-  });
-}
+  for (const user of state.users) {
+    const uid = user.id || user.uid;
+    scoreMap.set(uid, {
+      userId: uid,
+      displayName: getDisplayName(user),
+      competitions: {
+        ligue1: 0,
+        liga: 0,
+        serieA: 0,
+        premierLeague: 0,
+        ldc: 0
+      },
+      total: 0
+    });
+  }
 
   const evolutionBase = [];
   let finishedCounter = 0;
@@ -972,9 +972,23 @@ function renderAdminResults() {
 
 function renderAdminVisibility() {
   const isAdmin = !!state.userProfile?.isAdmin;
+
+  if (dom.adminNavButton) {
+    dom.adminNavButton.style.display = isAdmin ? "" : "none";
+  }
+
+  if (!isAdmin && state.currentView === "admin") {
+    setView("general");
+  }
+
+  if (dom.adminView) {
+    dom.adminView.style.display = isAdmin ? "" : "none";
+  }
+
   const info = document.getElementById("admin-access-message");
-  if (!info) return;
-  info.style.display = isAdmin ? "none" : "block";
+  if (info) {
+    info.style.display = isAdmin ? "none" : "none";
+  }
 }
 
 function renderAll() {
