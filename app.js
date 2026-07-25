@@ -28,12 +28,12 @@ import {
    CONFIG FIREBASE
    ========================================================= */
 const firebaseConfig = {
-  apiKey: "REPLACE_ME",
-  authDomain: "REPLACE_ME",
-  projectId: "REPLACE_ME",
-  storageBucket: "REPLACE_ME",
-  messagingSenderId: "REPLACE_ME",
-  appId: "REPLACE_ME"
+  apiKey: "AIzaSyAcOMlVrowR8vZjHgHkjSfs1i3D_3vSFYk",
+  authDomain: "prono-championnat-2026-2027.firebaseapp.com",
+  projectId: "prono-championnat-2026-2027",
+  storageBucket: "prono-championnat-2026-2027.firebasestorage.app",
+  messagingSenderId: "411901697014",
+  appId: "1:411901697014:web:e23262c63a3dc92e26c5d7"
 };
 
 /* Remplace cette valeur par ton vrai code admin */
