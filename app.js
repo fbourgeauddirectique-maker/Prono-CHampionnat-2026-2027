@@ -142,9 +142,9 @@ const dom = {
   adminMatchHome: $("admin-match-home"),
   adminMatchAway: $("admin-match-away"),
   adminMatchKickoff: $("admin-match-kickoff"),
-  adminResultsList: $("admin-results-list")
+  adminResultsList: $("admin-results-list"),
   adminNavButton: document.querySelector('.nav-link[data-view-target="admin"]'),
-  adminView: document.getElementById("view-admin")
+  adminView: $("view-admin")
 };
 
 /* =========================================================
@@ -565,13 +565,17 @@ function computeDerivedData() {
   const predictionsByMatch = new Map();
 
   for (const pred of state.predictions) {
-    if (!predictionsByMatch.has(pred.matchId)) predictionsByMatch.set(pred.matchId, []);
+    if (!predictionsByMatch.has(pred.matchId)) {
+      predictionsByMatch.set(pred.matchId, []);
+    }
     predictionsByMatch.get(pred.matchId).push(pred);
   }
 
   const scoreMap = new Map();
 
   for (const user of state.users) {
+    if (user?.isAdmin) continue;
+
     const uid = user.id || user.uid;
     scoreMap.set(uid, {
       userId: uid,
@@ -808,22 +812,33 @@ function renderRankings() {
   const myRankIndex = state.rankings.general.findIndex((r) => r.userId === myUid);
   const myEntry = state.rankings.general.find((r) => r.userId === myUid);
 
-  if (dom.statTotalUsers) dom.statTotalUsers.textContent = String(state.users.length);
+  if (dom.statTotalUsers) {
+    dom.statTotalUsers.textContent = String(state.users.filter((u) => !u?.isAdmin).length);
+  }
+
   if (dom.statTotalFinished) {
     dom.statTotalFinished.textContent = String(state.matches.filter(isMatchFinished).length);
   }
-  if (dom.statMyRank) dom.statMyRank.textContent = myRankIndex >= 0 ? String(myRankIndex + 1) : "-";
-  if (dom.statMyPoints) dom.statMyPoints.textContent = String(myEntry?.total || 0);
+
+  if (dom.statMyRank) {
+    dom.statMyRank.textContent = myRankIndex >= 0 ? String(myRankIndex + 1) : "-";
+  }
+
+  if (dom.statMyPoints) {
+    dom.statMyPoints.textContent = String(myEntry?.total || 0);
+  }
 }
 
 function renderEvolution() {
   if (!dom.evolutionPlayerSelect) return;
 
+  const nonAdminUsers = state.users.filter((user) => !user?.isAdmin);
+
   const currentSelection = new Set(
     Array.from(dom.evolutionPlayerSelect.selectedOptions).map((opt) => opt.value)
   );
 
-  dom.evolutionPlayerSelect.innerHTML = state.users
+  dom.evolutionPlayerSelect.innerHTML = nonAdminUsers
     .map((user) => {
       const uid = user.id || user.uid;
       const selected = currentSelection.size ? currentSelection.has(uid) : false;
@@ -831,7 +846,7 @@ function renderEvolution() {
     })
     .join("");
 
-  if (!currentSelection.size && state.users.length) {
+  if (!currentSelection.size && nonAdminUsers.length) {
     for (let i = 0; i < Math.min(3, dom.evolutionPlayerSelect.options.length); i += 1) {
       dom.evolutionPlayerSelect.options[i].selected = true;
     }
@@ -856,8 +871,8 @@ function drawEvolutionChart() {
   }
 
   const datasets = selectedIds.map((userId, index) => {
-    const rows = grouped.get(userId) || [];
     const user = state.users.find((u) => (u.id || u.uid) === userId);
+    const rows = grouped.get(userId) || [];
 
     return {
       label: getDisplayName(user),
@@ -983,11 +998,6 @@ function renderAdminVisibility() {
 
   if (dom.adminView) {
     dom.adminView.style.display = isAdmin ? "" : "none";
-  }
-
-  const info = document.getElementById("admin-access-message");
-  if (info) {
-    info.style.display = isAdmin ? "none" : "none";
   }
 }
 
