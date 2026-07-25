@@ -8,666 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    :root,
-    [data-theme="light"] {
-      --bg: #f5f7fb;
-      --surface: #ffffff;
-      --surface-2: #f0f4fa;
-      --line: #dbe3ef;
-      --text: #172033;
-      --muted: #63708a;
-      --primary: #0d6b73;
-      --primary-dark: #0a565c;
-      --danger: #b4234d;
-      --danger-soft: rgba(180, 35, 77, 0.12);
-      --success: #246a2d;
-      --success-soft: rgba(36, 106, 45, 0.12);
-      --info: #0d6b73;
-      --info-soft: rgba(13, 107, 115, 0.12);
-      --shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
-      --radius: 18px;
-      --radius-sm: 12px;
-
-      --ligue1: linear-gradient(135deg, #1d4ed8 0%, #ffffff 48%, #ef4444 100%);
-      --liga: linear-gradient(135deg, #aa151b 0%, #f1bf00 100%);
-      --serieA: linear-gradient(135deg, #009246 0%, #ffffff 50%, #ce2b37 100%);
-      --premierLeague: linear-gradient(135deg, #012169 0%, #c8102e 100%);
-      --ldc: linear-gradient(135deg, #061a40 0%, #0a84ff 100%);
-      --general: linear-gradient(135deg, #0f766e 0%, #155e75 100%);
-      --admin: linear-gradient(135deg, #3b4252 0%, #111827 100%);
-    }
-
-    [data-theme="dark"] {
-      --bg: #0f1724;
-      --surface: #131c2b;
-      --surface-2: #192336;
-      --line: #2a354a;
-      --text: #e8edf7;
-      --muted: #9eabc2;
-      --primary: #4db4bc;
-      --primary-dark: #328f96;
-      --danger: #ff6b93;
-      --danger-soft: rgba(255, 107, 147, 0.14);
-      --success: #58c36b;
-      --success-soft: rgba(88, 195, 107, 0.14);
-      --info: #4db4bc;
-      --info-soft: rgba(77, 180, 188, 0.14);
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: "Inter", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    body {
-      min-height: 100vh;
-    }
-
-    button,
-    input,
-    select {
-      font: inherit;
-    }
-
-    .app-shell {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      min-height: 100vh;
-    }
-
-    .sidebar {
-      background: var(--surface);
-      border-right: 1px solid var(--line);
-      padding: 24px 18px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow: auto;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .brand-mark {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #0d6b73 0%, #0a84ff 100%);
-      display: grid;
-      place-items: center;
-      color: white;
-      flex: 0 0 auto;
-      box-shadow: var(--shadow);
-    }
-
-    .brand-title {
-      font-size: 1.05rem;
-      font-weight: 800;
-      line-height: 1.1;
-    }
-
-    .brand-subtitle {
-      font-size: 0.88rem;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 20px;
-    }
-
-    .sidebar-section + .sidebar-section {
-      margin-top: 18px;
-    }
-
-    .eyebrow {
-      margin: 0 0 6px;
-      font-size: 0.76rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .helper-text {
-      color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.5;
-      margin: 0;
-    }
-
-    .auth-status {
-      font-size: 0.95rem;
-      font-weight: 700;
-      margin: 0 0 8px;
-    }
-
-    .auth-actions,
-    .stack-actions {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .btn {
-      border: 0;
-      border-radius: 14px;
-      min-height: 46px;
-      padding: 0 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-dark);
-    }
-
-    .btn-secondary {
-      background: var(--surface-2);
-      color: var(--text);
-      border: 1px solid var(--line);
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--line);
-    }
-
-    .nav {
-      display: grid;
-      gap: 10px;
-    }
-
-    .nav-link {
-      width: 100%;
-      text-align: left;
-      border: 0;
-      border-radius: 16px;
-      padding: 14px 16px;
-      color: white;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: var(--shadow);
-      position: relative;
-      overflow: hidden;
-      min-height: 52px;
-    }
-
-    .nav-link::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0.08);
-      opacity: 0;
-      transition: opacity 0.15s ease;
-    }
-
-    .nav-link:hover::after,
-    .nav-link.active::after {
-      opacity: 1;
-    }
-
-    .nav-general { background: var(--general); }
-    .nav-ligue1 { background: var(--ligue1); color: #101828; }
-    .nav-liga { background: var(--liga); }
-    .nav-serieA { background: var(--serieA); color: #101828; }
-    .nav-premierLeague { background: var(--premierLeague); }
-    .nav-ldc { background: var(--ldc); }
-    .nav-evolution { background: linear-gradient(135deg, #4338ca 0%, #0ea5e9 100%); }
-    .nav-admin { background: var(--admin); }
-
-    .main {
-      padding: 24px;
-      overflow: auto;
-    }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .topbar h1 {
-      margin: 0;
-      font-size: clamp(1.4rem, 2.2vw, 2rem);
-      line-height: 1.1;
-    }
-
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .status-chip {
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 0.88rem;
-      font-weight: 700;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-
-    .stat-label {
-      margin: 0 0 8px;
-      color: var(--muted);
-      font-size: 0.88rem;
-      font-weight: 700;
-    }
-
-    .stat-value {
-      margin: 0;
-      font-size: 1.8rem;
-      font-weight: 800;
-    }
-
-    .view {
-      display: none;
-    }
-
-    .view.active {
-      display: block;
-    }
-
-    .content-grid {
-      display: grid;
-      gap: 20px;
-    }
-
-    .section-grid {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 20px;
-    }
-
-    .section-title {
-      margin: 0 0 14px;
-      font-size: 1.15rem;
-      font-weight: 800;
-    }
-
-    .match-list {
-      display: grid;
-      gap: 14px;
-    }
-
-    .match-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-
-    .match-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 14px;
-    }
-
-    .match-title {
-      margin: 0 0 4px;
-      font-weight: 800;
-      font-size: 1.02rem;
-    }
-
-    .match-meta {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 32px;
-      padding: 0 12px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .tag-open {
-      background: var(--info-soft);
-      color: var(--info);
-      border: 1px solid rgba(13,107,115,.2);
-    }
-
-    .tag-closed {
-      background: var(--danger-soft);
-      color: var(--danger);
-      border: 1px solid rgba(180,35,77,.2);
-    }
-
-    .score-line {
-      font-size: 1.4rem;
-      font-weight: 800;
-      margin: 6px 0 12px;
-    }
-
-    .points-badge {
-      display: inline-block;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: var(--surface-2);
-      border: 1px solid var(--line);
-      font-size: 0.88rem;
-      font-weight: 700;
-      margin-bottom: 14px;
-    }
-
-    .prediction-form,
-    .admin-result-form,
-    .form-grid,
-    .form-stack {
-      display: grid;
-      gap: 12px;
-    }
-
-    .prediction-form {
-      grid-template-columns: 1fr 1fr auto;
-      align-items: center;
-    }
-
-    .form-grid.two-cols {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .field {
-      display: grid;
-      gap: 6px;
-    }
-
-    .field label {
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--muted);
-    }
-
-    input,
-    select {
-      width: 100%;
-      min-height: 46px;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: var(--surface);
-      color: var(--text);
-      padding: 0 14px;
-      outline: none;
-    }
-
-    input:focus,
-    select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(13, 107, 115, 0.12);
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 640px;
-    }
-
-    th,
-    td {
-      padding: 14px 14px;
-      text-align: left;
-      border-bottom: 1px solid var(--line);
-      font-size: 0.95rem;
-    }
-
-    th {
-      color: var(--muted);
-      font-size: 0.84rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      background: var(--surface-2);
-    }
-
-    tr:last-child td {
-      border-bottom: 0;
-    }
-
-    .rank-first td {
-      background: rgba(255, 215, 0, 0.08);
-    }
-
-    .rank-me td {
-      background: rgba(13, 107, 115, 0.08);
-    }
-
-    .chart-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-
-    .chart-wrap {
-      position: relative;
-      height: 420px;
-      margin-top: 12px;
-    }
-
-    .admin-layout {
-      display: grid;
-      gap: 20px;
-    }
-
-    .admin-access-box {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-      margin-bottom: 20px;
-    }
-
-    .admin-access-box h3 {
-      margin: 0 0 8px;
-      font-size: 1.05rem;
-    }
-
-    .auth-feedback {
-      display: none;
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      border: 1px solid transparent;
-    }
-
-    .auth-feedback.is-visible {
-      display: block;
-    }
-
-    .auth-feedback[data-type="error"] {
-      background: var(--danger-soft);
-      color: var(--danger);
-      border-color: rgba(180,35,77,.24);
-    }
-
-    .auth-feedback[data-type="success"] {
-      background: var(--success-soft);
-      color: var(--success);
-      border-color: rgba(36,106,45,.24);
-    }
-
-    .auth-feedback[data-type="info"] {
-      background: var(--info-soft);
-      color: var(--info);
-      border-color: rgba(13,107,115,.24);
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    dialog {
-      border: 0;
-      border-radius: 20px;
-      padding: 0;
-      width: min(92vw, 460px);
-      background: transparent;
-    }
-
-    dialog::backdrop {
-      background: rgba(15, 23, 36, 0.46);
-      backdrop-filter: blur(3px);
-    }
-
-    .dialog-card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      box-shadow: var(--shadow);
-      padding: 22px;
-    }
-
-    .dialog-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 16px;
-    }
-
-    .dialog-top h2 {
-      margin: 0 0 4px;
-      font-size: 1.2rem;
-    }
-
-    .dialog-close {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: var(--surface-2);
-      cursor: pointer;
-      font-size: 1.1rem;
-      color: var(--text);
-    }
-
-    .dialog-footer {
-      margin-top: 12px;
-    }
-
-    @media (max-width: 1120px) {
-      .app-shell {
-        grid-template-columns: 1fr;
-      }
-
-      .sidebar {
-        position: static;
-        height: auto;
-        border-right: 0;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .section-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 720px) {
-      .main {
-        padding: 16px;
-      }
-
-      .sidebar {
-        padding: 16px;
-      }
-
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .prediction-form,
-      .form-grid.two-cols {
-        grid-template-columns: 1fr;
-      }
-
-      .topbar {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .topbar-right {
-        width: 100%;
-      }
-
-      .topbar-right .btn,
-      .topbar-right .status-chip {
-        width: 100%;
-      }
-    }
-  </style>
 </head>
 <body>
   <div class="app-shell">
@@ -781,11 +123,7 @@
           <article class="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Participant</th>
-                  <th>Points</th>
-                </tr>
+                <tr><th>#</th><th>Participant</th><th>Points</th></tr>
               </thead>
               <tbody id="ranking-ligue1-body"></tbody>
             </table>
@@ -802,11 +140,7 @@
           <article class="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Participant</th>
-                  <th>Points</th>
-                </tr>
+                <tr><th>#</th><th>Participant</th><th>Points</th></tr>
               </thead>
               <tbody id="ranking-liga-body"></tbody>
             </table>
@@ -823,11 +157,7 @@
           <article class="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Participant</th>
-                  <th>Points</th>
-                </tr>
+                <tr><th>#</th><th>Participant</th><th>Points</th></tr>
               </thead>
               <tbody id="ranking-serieA-body"></tbody>
             </table>
@@ -844,11 +174,7 @@
           <article class="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Participant</th>
-                  <th>Points</th>
-                </tr>
+                <tr><th>#</th><th>Participant</th><th>Points</th></tr>
               </thead>
               <tbody id="ranking-premierLeague-body"></tbody>
             </table>
@@ -865,11 +191,7 @@
           <article class="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Participant</th>
-                  <th>Points</th>
-                </tr>
+                <tr><th>#</th><th>Participant</th><th>Points</th></tr>
               </thead>
               <tbody id="ranking-ldc-body"></tbody>
             </table>
@@ -910,7 +232,7 @@
               <p class="eyebrow">Admin</p>
               <h2 class="section-title">Créer un participant</h2>
               <p class="helper-text" style="margin-bottom: 14px;">
-                Dans cette version front-only, la création directe d’un compte depuis l’admin n’est pas encore finalisée.
+                Dans cette version, l’inscription autonome est disponible depuis le popup de connexion.
               </p>
 
               <form id="admin-create-user-form" class="form-stack">
@@ -990,13 +312,18 @@
     <div class="dialog-card">
       <div class="dialog-top">
         <div>
-          <h2>Connexion email</h2>
-          <p class="helper-text">Connecte-toi ou crée ton compte participant avec ton email et ton mot de passe.</p>
+          <h2>Connexion / inscription</h2>
+          <p class="helper-text">Connecte-toi ou crée ton compte avec le rôle de ton choix.</p>
         </div>
         <button class="dialog-close" type="button" onclick="document.getElementById('auth-dialog').close()">✕</button>
       </div>
 
       <form method="dialog" class="form-stack" onsubmit="return false;">
+        <div class="field">
+          <label for="auth-name">Nom</label>
+          <input id="auth-name" type="text" placeholder="Ton nom" autocomplete="name" />
+        </div>
+
         <div class="field">
           <label for="auth-email">Email</label>
           <input id="auth-email" type="email" placeholder="ton@email.com" autocomplete="email" />
@@ -1005,6 +332,19 @@
         <div class="field">
           <label for="auth-password">Mot de passe</label>
           <input id="auth-password" type="password" placeholder="Minimum 6 caractères" autocomplete="current-password" />
+        </div>
+
+        <div class="field">
+          <label for="auth-role">Rôle</label>
+          <select id="auth-role">
+            <option value="participant" selected>Participant</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
+        <div class="field" id="auth-admin-code-wrapper" style="display:none;">
+          <label for="auth-admin-code">Code admin</label>
+          <input id="auth-admin-code" type="password" placeholder="Code admin" />
         </div>
 
         <div id="auth-feedback" class="auth-feedback" data-type="info" aria-live="polite"></div>
@@ -1016,8 +356,7 @@
 
         <div class="dialog-footer">
           <p class="helper-text">
-            Si rien ne se passe d’habitude, cette zone affichera maintenant un message clair :
-            email invalide, mot de passe trop court, email déjà utilisé, provider non activé, etc.
+            Si tu choisis le rôle admin, le code admin sera demandé avant la création du compte.
           </p>
         </div>
       </form>
