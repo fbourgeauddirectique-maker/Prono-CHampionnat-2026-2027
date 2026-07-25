@@ -1,18 +1,65 @@
 :root,
 [data-theme="light"] {
-  --bg: #0f172a;
-  --bg-soft: #111c34;
-  --panel: #18233f;
-  --panel-2: #223055;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
+  --bg: #f3f7fb;
+  --bg-soft: #e8eef6;
+  --panel: #ffffff;
+  --panel-2: #f8fbff;
+  --line: rgba(15, 23, 42, 0.08);
+  --line-strong: rgba(15, 23, 42, 0.16);
+  --text: #0f172a;
+  --muted: #475569;
+  --soft: #64748b;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --shadow: 0 18px 40px rgba(15, 23, 42, 0.10);
+
+  --general: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+  --ligue1: linear-gradient(135deg, #0055a4 0%, #ffffff 50%, #ef4135 100%);
+  --liga: linear-gradient(135deg, #aa151b 0%, #f1bf00 100%);
+  --serieA: linear-gradient(135deg, #009246 0%, #ffffff 50%, #ce2b37 100%);
+  --premierLeague: linear-gradient(135deg, #3d195b 0%, #00ff87 100%);
+  --ldc: linear-gradient(135deg, #0b1f66 0%, #1236b8 55%, #5de0ff 100%);
+  --evolution: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  --admin: linear-gradient(135deg, #9a3412 0%, #f97316 100%);
+
+  --btn-primary: #2563eb;
+  --btn-primary-hover: #1d4ed8;
+  --btn-secondary: #e2e8f0;
+  --btn-secondary-hover: #cbd5e1;
+  --btn-ghost: transparent;
+
+  --sidebar-bg: rgba(255, 255, 255, 0.88);
+  --brand-bg: linear-gradient(135deg, rgba(37, 99, 235, 0.10), rgba(255, 255, 255, 0.92));
+  --panel-bg: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+  --table-head: rgba(15, 23, 42, 0.04);
+  --table-row-hover: rgba(37, 99, 235, 0.04);
+  --input-bg: rgba(255, 255, 255, 0.90);
+  --ghost-bg: rgba(15, 23, 42, 0.04);
+  --ghost-bg-hover: rgba(15, 23, 42, 0.08);
+  --topbar-chip-bg: rgba(37, 99, 235, 0.10);
+  --topbar-chip-text: #1e3a8a;
+  --topbar-chip-border: rgba(37, 99, 235, 0.16);
+  --heading-strong: #0f172a;
+  --text-on-dark: #ffffff;
+  --radius: 18px;
+  --radius-sm: 12px;
+}
+
+[data-theme="dark"] {
+  --bg: #020617;
+  --bg-soft: #0b1222;
+  --panel: #111827;
+  --panel-2: #172033;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.16);
   --text: #f8fafc;
   --muted: #cbd5e1;
   --soft: #94a3b8;
   --success: #22c55e;
   --danger: #ef4444;
   --warning: #f59e0b;
-  --shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  --shadow: 0 24px 48px rgba(0, 0, 0, 0.42);
 
   --general: linear-gradient(135deg, #334155 0%, #1e293b 100%);
   --ligue1: linear-gradient(135deg, #0055a4 0%, #ffffff 50%, #ef4135 100%);
@@ -28,21 +75,22 @@
   --btn-secondary: #334155;
   --btn-secondary-hover: #475569;
   --btn-ghost: transparent;
+
+  --sidebar-bg: rgba(9, 15, 29, 0.92);
+  --brand-bg: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(15, 23, 42, 0.9));
+  --panel-bg: linear-gradient(180deg, rgba(24, 35, 63, 0.96), rgba(15, 23, 42, 0.96));
+  --table-head: rgba(255, 255, 255, 0.04);
+  --table-row-hover: rgba(255, 255, 255, 0.035);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --ghost-bg: rgba(255, 255, 255, 0.06);
+  --ghost-bg-hover: rgba(255, 255, 255, 0.11);
+  --topbar-chip-bg: rgba(37, 99, 235, 0.18);
+  --topbar-chip-text: #dbeafe;
+  --topbar-chip-border: rgba(96, 165, 250, 0.20);
+  --heading-strong: #ffffff;
+  --text-on-dark: #ffffff;
   --radius: 18px;
   --radius-sm: 12px;
-}
-
-[data-theme="dark"] {
-  --bg: #020617;
-  --bg-soft: #0b1222;
-  --panel: #111827;
-  --panel-2: #172033;
-  --line: rgba(255, 255, 255, 0.09);
-  --line-strong: rgba(255, 255, 255, 0.16);
-  --text: #f8fafc;
-  --muted: #cbd5e1;
-  --soft: #94a3b8;
-  --shadow: 0 24px 48px rgba(0, 0, 0, 0.42);
 }
 
 * {
