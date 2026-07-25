@@ -302,20 +302,32 @@ function getFriendlyAuthErrorMessage(error) {
 
 /* =========================================================
    THEME
-   ========================================================= */
-(function initTheme() {
+========================================================= */
+function updateThemeToggleLabel() {
+  if (!dom.themeToggle) return;
+  const current = document.documentElement.getAttribute("data-theme");
+  dom.themeToggle.textContent =
+    current === "dark" ? "Passer en mode clair" : "Passer en mode sombre";
+}
+
+function initTheme() {
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
-})();
+  updateThemeToggleLabel();
 
-dom.themeToggle?.addEventListener("click", () => {
-  const current = document.documentElement.getAttribute("data-theme");
-  document.documentElement.setAttribute("data-theme", current === "dark" ? "light" : "dark");
-});
+  dom.themeToggle?.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    document.documentElement.setAttribute(
+      "data-theme",
+      current === "dark" ? "light" : "dark"
+    );
+    updateThemeToggleLabel();
+  });
+}
 
 /* =========================================================
    NAVIGATION
-   ========================================================= */
+========================================================= */
 function setView(viewId) {
   state.currentView = viewId;
 
@@ -339,11 +351,9 @@ function setView(viewId) {
   };
 
   dom.pageTitle.textContent = titles[viewId] || "Prono Multi-Championnats";
+  dom.pageTitle.className = "page-title";
+  dom.pageTitle.classList.add(`page-title-${viewId}`);
 }
-
-document.querySelectorAll(".nav-link").forEach((btn) => {
-  btn.addEventListener("click", () => setView(btn.dataset.viewTarget));
-});
 
 /* =========================================================
    AUTH
@@ -1070,6 +1080,7 @@ dom.adminCreateMatchForm?.addEventListener("submit", async (event) => {
 /* =========================================================
    INIT
    ========================================================= */
+initTheme();
 setView("general");
 computeDerivedData();
 renderAll();
