@@ -8,7 +8,6 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
 import {
   getFirestore,
   collection,
@@ -26,7 +25,7 @@ import {
 
 /* =========================================================
    CONFIG FIREBASE
-   ========================================================= */
+========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyAcOMlVrowR8vZjHgHkjSfs1i3D_3vSFYk",
   authDomain: "prono-championnat-2026-2027.firebaseapp.com",
@@ -36,7 +35,6 @@ const firebaseConfig = {
   appId: "1:411901697014:web:e23262c63a3dc92e26c5d7"
 };
 
-/* Remplace cette valeur par ton vrai code admin */
 const ADMIN_SIGNUP_CODE = "DIRECTIQUE2026";
 
 const app = initializeApp(firebaseConfig);
@@ -46,7 +44,7 @@ const googleProvider = new GoogleAuthProvider();
 
 /* =========================================================
    CONSTANTES
-   ========================================================= */
+========================================================= */
 const COMPETITIONS = [
   { id: "ligue1", label: "Ligue 1" },
   { id: "liga", label: "Liga" },
@@ -55,7 +53,12 @@ const COMPETITIONS = [
   { id: "ldc", label: "Ligue des Champions" }
 ];
 
-const WEEKLY_LIMITED_COMPETITIONS = new Set(["ligue1", "liga", "serieA", "premierLeague"]);
+const WEEKLY_LIMITED_COMPETITIONS = new Set([
+  "ligue1",
+  "liga",
+  "serieA",
+  "premierLeague"
+]);
 
 const POINTS = {
   exact: 3,
@@ -86,7 +89,7 @@ const state = {
 
 /* =========================================================
    DOM
-   ========================================================= */
+========================================================= */
 const $ = (id) => document.getElementById(id);
 
 const dom = {
@@ -108,12 +111,10 @@ const dom = {
   btnEmailLogin: $("btn-email-login"),
   btnEmailSignup: $("btn-email-signup"),
   themeToggle: $("theme-toggle"),
-
   statTotalUsers: $("stat-total-users"),
   statTotalFinished: $("stat-total-finished"),
   statMyRank: $("stat-my-rank"),
   statMyPoints: $("stat-my-points"),
-
   rankingGeneralBody: $("ranking-general-body"),
   rankingBodies: {
     ligue1: $("ranking-ligue1-body"),
@@ -122,7 +123,6 @@ const dom = {
     premierLeague: $("ranking-premierLeague-body"),
     ldc: $("ranking-ldc-body")
   },
-
   matchContainers: {
     ligue1: $("matches-ligue1"),
     liga: $("matches-liga"),
@@ -130,28 +130,24 @@ const dom = {
     premierLeague: $("matches-premierLeague"),
     ldc: $("matches-ldc")
   },
-
   evolutionPlayerSelect: $("evolution-player-select"),
   evolutionChart: $("evolution-chart"),
-
   adminCreateUserForm: $("admin-create-user-form"),
   createUserName: $("create-user-name"),
   createUserEmail: $("create-user-email"),
   createUserPassword: $("create-user-password"),
-
   adminCreateMatchForm: $("admin-create-match-form"),
   adminMatchCompetition: $("admin-match-competition"),
   adminMatchRound: $("admin-match-round"),
   adminMatchHome: $("admin-match-home"),
   adminMatchAway: $("admin-match-away"),
   adminMatchKickoff: $("admin-match-kickoff"),
-
   adminResultsList: $("admin-results-list")
 };
 
 /* =========================================================
    OUTILS
-   ========================================================= */
+========================================================= */
 function escapeHtml(value = "") {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -163,7 +159,7 @@ function escapeHtml(value = "") {
 
 function toMillis(value) {
   if (!value) return 0;
-  if (value?.toMillis) return value.toMillis();
+  if (typeof value?.toMillis === "function") return value.toMillis();
   if (value instanceof Date) return value.getTime();
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
@@ -187,7 +183,7 @@ function isMatchClosed(match) {
 }
 
 function isMatchFinished(match) {
-  return Number.isFinite(match.homeScore) && Number.isFinite(match.awayScore);
+  return Number.isFinite(Number(match.homeScore)) && Number.isFinite(Number(match.awayScore));
 }
 
 function getOutcome(home, away) {
@@ -222,11 +218,13 @@ function getDisplayName(user) {
 function weekKeyFromKickoff(kickoff) {
   const date = new Date(toMillis(kickoff));
   if (Number.isNaN(date.getTime())) return "";
+
   const jan1 = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
   const current = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const dayMs = 86400000;
   const dayOfYear = Math.floor((current - jan1) / dayMs) + 1;
   const week = Math.ceil(dayOfYear / 7);
+
   return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
@@ -252,9 +250,7 @@ function alertError(error, fallback = "Une erreur est survenue.") {
 }
 
 function ensureAuthMessageBox() {
-  let box = document.getElementById("auth-feedback");
-  if (box) return box;
-  return null;
+  return document.getElementById("auth-feedback");
 }
 
 function setAuthFeedback(message, type = "error") {
@@ -317,10 +313,7 @@ function initTheme() {
 
   dom.themeToggle?.addEventListener("click", () => {
     const current = document.documentElement.getAttribute("data-theme");
-    document.documentElement.setAttribute(
-      "data-theme",
-      current === "dark" ? "light" : "dark"
-    );
+    document.documentElement.setAttribute("data-theme", current === "dark" ? "light" : "dark");
     updateThemeToggleLabel();
   });
 }
@@ -350,14 +343,25 @@ function setView(viewId) {
     admin: "Admin"
   };
 
-  dom.pageTitle.textContent = titles[viewId] || "Prono Multi-Championnats";
-  dom.pageTitle.className = "page-title";
-  dom.pageTitle.classList.add(`page-title-${viewId}`);
+  if (dom.pageTitle) {
+    dom.pageTitle.textContent = titles[viewId] || "Prono Multi-Championnats";
+    dom.pageTitle.className = "page-title";
+    dom.pageTitle.classList.add(`page-title-${viewId}`);
+  }
+}
+
+function initNavigation() {
+  document.querySelectorAll(".nav-link").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const viewId = btn.dataset.viewTarget;
+      if (viewId) setView(viewId);
+    });
+  });
 }
 
 /* =========================================================
    AUTH
-   ========================================================= */
+========================================================= */
 async function ensureUserProfile(user, fallbackName = "", forcedRole = null, forcedIsAdmin = null) {
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
@@ -369,7 +373,8 @@ async function ensureUserProfile(user, fallbackName = "", forcedRole = null, for
     const profile = {
       uid: user.uid,
       email: user.email || "",
-      displayName: user.displayName || fallbackName || user.email?.split("@")[0] || "Participant",
+      displayName:
+        user.displayName || fallbackName || user.email?.split("@")[0] || "Participant",
       role,
       isAdmin,
       createdAt: serverTimestamp()
@@ -409,7 +414,7 @@ async function loginWithEmail() {
 
     setTimeout(() => {
       setAuthFeedback("");
-      dom.authDialog.close();
+      dom.authDialog?.close();
     }, 500);
   } catch (error) {
     console.error(error);
@@ -442,19 +447,12 @@ async function signupWithEmail() {
 
     setAuthFeedback("Création du compte en cours…", "info");
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-    await ensureUserProfile(
-      cred.user,
-      name,
-      role,
-      role === "admin"
-    );
+    await ensureUserProfile(cred.user, name, role, role === "admin");
 
     setAuthFeedback("Compte créé avec succès.", "success");
-
     setTimeout(() => {
       setAuthFeedback("");
-      dom.authDialog.close();
+      dom.authDialog?.close();
     }, 700);
   } catch (error) {
     console.error(error);
@@ -477,84 +475,90 @@ function updateRoleFieldVisibility() {
   }
 }
 
-dom.authRole?.addEventListener("change", updateRoleFieldVisibility);
-updateRoleFieldVisibility();
+function initAuthUI() {
+  dom.authRole?.addEventListener("change", updateRoleFieldVisibility);
+  updateRoleFieldVisibility();
 
-dom.btnGoogleLogin?.addEventListener("click", loginWithGoogle);
-dom.btnOpenAuth?.addEventListener("click", () => {
-  setAuthFeedback("");
-  dom.authDialog.showModal();
-});
-dom.btnEmailLogin?.addEventListener("click", loginWithEmail);
-dom.btnEmailSignup?.addEventListener("click", signupWithEmail);
-dom.btnLogout?.addEventListener("click", logoutUser);
+  dom.btnGoogleLogin?.addEventListener("click", loginWithGoogle);
 
-onAuthStateChanged(auth, async (user) => {
-  state.currentUser = user || null;
+  dom.btnOpenAuth?.addEventListener("click", () => {
+    setAuthFeedback("");
+    dom.authDialog?.showModal();
+  });
 
-  if (!user) {
-    state.userProfile = null;
-    dom.authStatus.textContent = "Non connecté";
-    dom.authLoggedOut.classList.remove("hidden");
-    dom.authLoggedIn.classList.add("hidden");
+  dom.btnEmailLogin?.addEventListener("click", loginWithEmail);
+  dom.btnEmailSignup?.addEventListener("click", signupWithEmail);
+  dom.btnLogout?.addEventListener("click", logoutUser);
+
+  onAuthStateChanged(auth, async (user) => {
+    state.currentUser = user || null;
+
+    if (!user) {
+      state.userProfile = null;
+      if (dom.authStatus) dom.authStatus.textContent = "Non connecté";
+      dom.authLoggedOut?.classList.remove("hidden");
+      dom.authLoggedIn?.classList.add("hidden");
+      renderAll();
+      return;
+    }
+
+    if (dom.syncStatus) dom.syncStatus.textContent = "Connexion…";
+
+    try {
+      state.userProfile = await ensureUserProfile(user);
+      if (dom.authStatus) {
+        dom.authStatus.textContent = `${getDisplayName(state.userProfile)}${
+          state.userProfile.isAdmin ? " · Admin" : " · Participant"
+        }`;
+      }
+      dom.authLoggedOut?.classList.add("hidden");
+      dom.authLoggedIn?.classList.remove("hidden");
+    } catch (error) {
+      alertError(error, "Impossible de charger le profil utilisateur.");
+    }
+
     renderAll();
-    return;
-  }
-
-  dom.syncStatus.textContent = "Connexion…";
-
-  try {
-    state.userProfile = await ensureUserProfile(user);
-    dom.authStatus.textContent = `${getDisplayName(state.userProfile)}${state.userProfile.isAdmin ? " · Admin" : " · Participant"}`;
-    dom.authLoggedOut.classList.add("hidden");
-    dom.authLoggedIn.classList.remove("hidden");
-  } catch (error) {
-    alertError(error, "Impossible de charger le profil utilisateur.");
-  }
-
-  renderAll();
-});
+  });
+}
 
 /* =========================================================
    FIRESTORE LISTENERS
-   ========================================================= */
+========================================================= */
 function subscribeCollection(collectionName, assign) {
   const q = query(collection(db, collectionName));
+
   return onSnapshot(
     q,
     (snap) => {
-      assign(
-        snap.docs.map((d) => ({
-          id: d.id,
-          ...d.data()
-        }))
-      );
-      dom.syncStatus.textContent = "Synchronisé";
+      assign(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      if (dom.syncStatus) dom.syncStatus.textContent = "Synchronisé";
       computeDerivedData();
       renderAll();
     },
     (error) => {
       console.error(error);
-      dom.syncStatus.textContent = "Erreur sync";
+      if (dom.syncStatus) dom.syncStatus.textContent = "Erreur sync";
     }
   );
 }
 
-subscribeCollection("users", (items) => {
-  state.users = items;
-});
+function initFirestoreSubscriptions() {
+  subscribeCollection("users", (items) => {
+    state.users = items;
+  });
 
-subscribeCollection("matches", (items) => {
-  state.matches = items.sort((a, b) => toMillis(a.kickoff) - toMillis(b.kickoff));
-});
+  subscribeCollection("matches", (items) => {
+    state.matches = items.sort((a, b) => toMillis(a.kickoff) - toMillis(b.kickoff));
+  });
 
-subscribeCollection("predictions", (items) => {
-  state.predictions = items;
-});
+  subscribeCollection("predictions", (items) => {
+    state.predictions = items;
+  });
+}
 
 /* =========================================================
    DERIVED DATA
-   ========================================================= */
+========================================================= */
 function computeDerivedData() {
   const predictionsByMatch = new Map();
 
@@ -564,6 +568,7 @@ function computeDerivedData() {
   }
 
   const scoreMap = new Map();
+
   for (const user of state.users) {
     const uid = user.id || user.uid;
     scoreMap.set(uid, {
@@ -651,10 +656,12 @@ function computeDerivedData() {
 
 /* =========================================================
    RENDERS
-   ========================================================= */
+========================================================= */
 function getCurrentUserPrediction(matchId) {
   if (!state.currentUser) return null;
-  return state.predictions.find((p) => p.matchId === matchId && p.userId === state.currentUser.uid) || null;
+  return state.predictions.find(
+    (p) => p.matchId === matchId && p.userId === state.currentUser.uid
+  ) || null;
 }
 
 function renderCompetitionMatches(competitionId) {
@@ -664,50 +671,80 @@ function renderCompetitionMatches(competitionId) {
   const matches = state.matches.filter((m) => m.competitionId === competitionId);
 
   if (!matches.length) {
-    container.innerHTML = `<div class="match-card"><p class="helper-text">Aucun match n’a encore été ajouté.</p></div>`;
+    container.innerHTML = `
+      <div class="match-card">
+        <p class="helper-text">Aucun match n’a encore été ajouté.</p>
+      </div>
+    `;
     return;
   }
 
-  container.innerHTML = matches.map((match) => {
-    const myPred = getCurrentUserPrediction(match.id);
-    const closed = isMatchClosed(match);
-    const finished = isMatchFinished(match);
-    const tagClass = closed ? "tag tag-closed" : "tag tag-open";
-    const tagText = closed ? "Fermé" : "Ouvert";
-    const exactScore = finished ? `<div class="score-line">${match.homeScore} - ${match.awayScore}</div>` : "";
-    const predInfo = myPred
-      ? `<div class="points-badge">Mon prono : ${Number(myPred.predHome)} - ${Number(myPred.predAway)}</div>`
-      : `<div class="points-badge">Aucun prono enregistré</div>`;
+  container.innerHTML = matches
+    .map((match) => {
+      const myPred = getCurrentUserPrediction(match.id);
+      const closed = isMatchClosed(match);
+      const finished = isMatchFinished(match);
+      const tagClass = closed ? "tag tag-closed" : "tag tag-open";
+      const tagText = closed ? "Fermé" : "Ouvert";
 
-    return `
-      <article class="match-card">
-        <div class="match-top">
-          <div>
-            <div class="match-title">${escapeHtml(match.homeTeam)} - ${escapeHtml(match.awayTeam)}</div>
-            <div class="match-meta">${escapeHtml(match.roundLabel || "")} · ${formatDateTime(match.kickoff)}</div>
+      const exactScore = finished
+        ? `<div class="score-line">${Number(match.homeScore)} - ${Number(match.awayScore)}</div>`
+        : "";
+
+      const predInfo = myPred
+        ? `<div class="points-badge">Mon prono : ${Number(myPred.predHome)} - ${Number(myPred.predAway)}</div>`
+        : `<div class="points-badge">Aucun prono enregistré</div>`;
+
+      return `
+        <article class="match-card">
+          <div class="match-top">
+            <div>
+              <div class="match-title">${escapeHtml(match.homeTeam)} - ${escapeHtml(match.awayTeam)}</div>
+              <div class="match-meta">${escapeHtml(match.roundLabel || "")} · ${formatDateTime(match.kickoff)}</div>
+            </div>
+            <div>
+              <span class="${tagClass}">${tagText}</span>
+            </div>
           </div>
-          <span class="${tagClass}">${tagText}</span>
-        </div>
 
-        ${exactScore}
-        ${predInfo}
+          ${exactScore}
+          ${predInfo}
 
-        <form class="prediction-form" data-prediction-form="${match.id}">
-          <input type="number" min="0" inputmode="numeric" placeholder="Domicile" value="${myPred ? Number(myPred.predHome) : ""}" ${closed ? "disabled" : ""} />
-          <input type="number" min="0" inputmode="numeric" placeholder="Extérieur" value="${myPred ? Number(myPred.predAway) : ""}" ${closed ? "disabled" : ""} />
-          <button class="btn btn-primary" type="submit" ${closed ? "disabled" : ""}>Valider</button>
-        </form>
-      </article>
-    `;
-  }).join("");
+          <form class="prediction-form" data-prediction-form="${match.id}">
+            <input
+              type="number"
+              min="0"
+              inputmode="numeric"
+              placeholder="Domicile"
+              value="${myPred ? Number(myPred.predHome) : ""}"
+              ${closed ? "disabled" : ""}
+            />
+            <input
+              type="number"
+              min="0"
+              inputmode="numeric"
+              placeholder="Extérieur"
+              value="${myPred ? Number(myPred.predAway) : ""}"
+              ${closed ? "disabled" : ""}
+            />
+            <button class="btn btn-primary" type="submit" ${closed ? "disabled" : ""}>
+              Valider
+            </button>
+          </form>
+        </article>
+      `;
+    })
+    .join("");
 
   container.querySelectorAll("[data-prediction-form]").forEach((form) => {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+
       const matchId = form.getAttribute("data-prediction-form");
       const inputs = form.querySelectorAll("input");
       const predHome = Number(inputs[0].value);
       const predAway = Number(inputs[1].value);
+
       await submitPrediction(matchId, predHome, predAway);
     });
   });
@@ -716,53 +753,65 @@ function renderCompetitionMatches(competitionId) {
 function renderRankings() {
   const myUid = state.currentUser?.uid || null;
 
-  dom.rankingGeneralBody.innerHTML = state.rankings.general.map((entry, index) => {
-    const classNames = [
-      index === 0 ? "rank-first" : "",
-      myUid && entry.userId === myUid ? "rank-me" : ""
-    ].filter(Boolean).join(" ");
+  if (dom.rankingGeneralBody) {
+    dom.rankingGeneralBody.innerHTML = state.rankings.general
+      .map((entry, index) => {
+        const classNames = [
+          index === 0 ? "rank-first" : "",
+          myUid && entry.userId === myUid ? "rank-me" : ""
+        ]
+          .filter(Boolean)
+          .join(" ");
 
-    return `
-      <tr class="${classNames}">
-        <td>${index + 1}</td>
-        <td>${escapeHtml(entry.displayName)}</td>
-        <td>${entry.competitions.ligue1}</td>
-        <td>${entry.competitions.liga}</td>
-        <td>${entry.competitions.serieA}</td>
-        <td>${entry.competitions.premierLeague}</td>
-        <td>${entry.competitions.ldc}</td>
-        <td><strong>${entry.total}</strong></td>
-      </tr>
-    `;
-  }).join("");
+        return `
+          <tr class="${classNames}">
+            <td>${index + 1}</td>
+            <td>${escapeHtml(entry.displayName)}</td>
+            <td>${entry.competitions.ligue1}</td>
+            <td>${entry.competitions.liga}</td>
+            <td>${entry.competitions.serieA}</td>
+            <td>${entry.competitions.premierLeague}</td>
+            <td>${entry.competitions.ldc}</td>
+            <td><strong>${entry.total}</strong></td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
 
   for (const comp of COMPETITIONS) {
     const body = dom.rankingBodies[comp.id];
     if (!body) continue;
 
-    body.innerHTML = state.rankings.byCompetition[comp.id].map((entry, index) => {
-      const classNames = [
-        index === 0 ? "rank-first" : "",
-        myUid && entry.userId === myUid ? "rank-me" : ""
-      ].filter(Boolean).join(" ");
+    body.innerHTML = state.rankings.byCompetition[comp.id]
+      .map((entry, index) => {
+        const classNames = [
+          index === 0 ? "rank-first" : "",
+          myUid && entry.userId === myUid ? "rank-me" : ""
+        ]
+          .filter(Boolean)
+          .join(" ");
 
-      return `
-        <tr class="${classNames}">
-          <td>${index + 1}</td>
-          <td>${escapeHtml(entry.displayName)}</td>
-          <td><strong>${entry.points}</strong></td>
-        </tr>
-      `;
-    }).join("");
+        return `
+          <tr class="${classNames}">
+            <td>${index + 1}</td>
+            <td>${escapeHtml(entry.displayName)}</td>
+            <td><strong>${entry.points}</strong></td>
+          </tr>
+        `;
+      })
+      .join("");
   }
 
   const myRankIndex = state.rankings.general.findIndex((r) => r.userId === myUid);
   const myEntry = state.rankings.general.find((r) => r.userId === myUid);
 
-  dom.statTotalUsers.textContent = String(state.users.length);
-  dom.statTotalFinished.textContent = String(state.matches.filter(isMatchFinished).length);
-  dom.statMyRank.textContent = myRankIndex >= 0 ? String(myRankIndex + 1) : "-";
-  dom.statMyPoints.textContent = String(myEntry?.total || 0);
+  if (dom.statTotalUsers) dom.statTotalUsers.textContent = String(state.users.length);
+  if (dom.statTotalFinished) {
+    dom.statTotalFinished.textContent = String(state.matches.filter(isMatchFinished).length);
+  }
+  if (dom.statMyRank) dom.statMyRank.textContent = myRankIndex >= 0 ? String(myRankIndex + 1) : "-";
+  if (dom.statMyPoints) dom.statMyPoints.textContent = String(myEntry?.total || 0);
 }
 
 function renderEvolution() {
@@ -772,11 +821,13 @@ function renderEvolution() {
     Array.from(dom.evolutionPlayerSelect.selectedOptions).map((opt) => opt.value)
   );
 
-  dom.evolutionPlayerSelect.innerHTML = state.users.map((user) => {
-    const uid = user.id || user.uid;
-    const selected = currentSelection.size ? currentSelection.has(uid) : false;
-    return `<option value="${uid}" ${selected ? "selected" : ""}>${escapeHtml(getDisplayName(user))}</option>`;
-  }).join("");
+  dom.evolutionPlayerSelect.innerHTML = state.users
+    .map((user) => {
+      const uid = user.id || user.uid;
+      const selected = currentSelection.size ? currentSelection.has(uid) : false;
+      return `<option value="${uid}" ${selected ? "selected" : ""}>${escapeHtml(getDisplayName(user))}</option>`;
+    })
+    .join("");
 
   if (!currentSelection.size && state.users.length) {
     for (let i = 0; i < Math.min(3, dom.evolutionPlayerSelect.options.length); i += 1) {
@@ -788,24 +839,26 @@ function renderEvolution() {
 }
 
 function drawEvolutionChart() {
-  if (!window.Chart || !dom.evolutionChart) return;
+  if (!window.Chart || !dom.evolutionChart || !dom.evolutionPlayerSelect) return;
 
   const selectedIds = Array.from(dom.evolutionPlayerSelect.selectedOptions).map((opt) => opt.value);
   const ctx = dom.evolutionChart.getContext("2d");
 
+  const labels = [...new Set(state.evolution.map((row) => row.label))];
   const grouped = new Map();
+
   for (const row of state.evolution) {
     if (!selectedIds.includes(row.userId)) continue;
     if (!grouped.has(row.userId)) grouped.set(row.userId, []);
     grouped.get(row.userId).push(row);
   }
 
-  const labels = [...new Set(state.evolution.map((row) => row.label))];
   const datasets = selectedIds.map((userId, index) => {
     const rows = grouped.get(userId) || [];
-    const displayName = state.users.find((u) => (u.id || u.uid) === userId);
+    const user = state.users.find((u) => (u.id || u.uid) === userId);
+
     return {
-      label: getDisplayName(displayName),
+      label: getDisplayName(user),
       data: rows.map((r) => r.total),
       borderColor: generateColor(index),
       backgroundColor: generateColor(index),
@@ -818,21 +871,26 @@ function drawEvolutionChart() {
 
   state.chart = new Chart(ctx, {
     type: "line",
-    data: { labels, datasets },
+    data: {
+      labels,
+      datasets
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: "bottom" }
+        legend: {
+          position: "bottom"
+        }
       },
       scales: {
-        y: { beginAtZero: true }
+        y: {
+          beginAtZero: true
+        }
       }
     }
   });
 }
-
-dom.evolutionPlayerSelect?.addEventListener("change", drawEvolutionChart);
 
 function renderAdminResults() {
   if (!dom.adminResultsList) return;
@@ -840,37 +898,64 @@ function renderAdminResults() {
   const isAdmin = !!state.userProfile?.isAdmin;
 
   if (!state.matches.length) {
-    dom.adminResultsList.innerHTML = `<div class="match-card"><p class="helper-text">Aucun match à gérer pour le moment.</p></div>`;
+    dom.adminResultsList.innerHTML = `
+      <div class="match-card">
+        <p class="helper-text">Aucun match à gérer pour le moment.</p>
+      </div>
+    `;
     return;
   }
 
-  dom.adminResultsList.innerHTML = state.matches.map((match) => `
-    <article class="match-card">
-      <div class="match-top">
-        <div>
-          <div class="match-title">${escapeHtml(match.homeTeam)} - ${escapeHtml(match.awayTeam)}</div>
-          <div class="match-meta">${escapeHtml(getCompetitionLabel(match.competitionId))} · ${formatDateTime(match.kickoff)}</div>
+  dom.adminResultsList.innerHTML = state.matches
+    .map((match) => `
+      <article class="match-card">
+        <div class="match-top">
+          <div>
+            <div class="match-title">${escapeHtml(match.homeTeam)} - ${escapeHtml(match.awayTeam)}</div>
+            <div class="match-meta">${escapeHtml(getCompetitionLabel(match.competitionId))} · ${formatDateTime(match.kickoff)}</div>
+          </div>
+          <div>
+            <span class="${isMatchClosed(match) ? "tag tag-closed" : "tag tag-open"}">
+              ${isMatchClosed(match) ? "Fermé" : "Ouvert"}
+            </span>
+          </div>
         </div>
-        <span class="${isMatchClosed(match) ? "tag tag-closed" : "tag tag-open"}">${isMatchClosed(match) ? "Fermé" : "Ouvert"}</span>
-      </div>
 
-      <form class="admin-result-form" data-admin-result-form="${match.id}">
-        <input type="number" min="0" placeholder="Score domicile" value="${Number.isFinite(match.homeScore) ? Number(match.homeScore) : ""}" />
-        <input type="number" min="0" placeholder="Score extérieur" value="${Number.isFinite(match.awayScore) ? Number(match.awayScore) : ""}" />
-        <button class="btn btn-primary" type="submit">Enregistrer</button>
-        <button class="btn btn-ghost" type="button" data-delete-match="${match.id}">Supprimer</button>
-      </form>
-      ${!isAdmin ? `<p class="helper-text">Accès réservé à l’administrateur pour modifier ce match.</p>` : ""}
-    </article>
-  `).join("");
+        <form class="admin-result-form" data-admin-result-form="${match.id}">
+          <input
+            type="number"
+            min="0"
+            placeholder="Score domicile"
+            value="${Number.isFinite(Number(match.homeScore)) ? Number(match.homeScore) : ""}"
+          />
+          <input
+            type="number"
+            min="0"
+            placeholder="Score extérieur"
+            value="${Number.isFinite(Number(match.awayScore)) ? Number(match.awayScore) : ""}"
+          />
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+          <button class="btn btn-ghost" type="button" data-delete-match="${match.id}">Supprimer</button>
+        </form>
+
+        ${
+          !isAdmin
+            ? `<p class="helper-text">Accès réservé à l’administrateur pour modifier ce match.</p>`
+            : ""
+        }
+      </article>
+    `)
+    .join("");
 
   dom.adminResultsList.querySelectorAll("[data-admin-result-form]").forEach((form) => {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+
       const matchId = form.getAttribute("data-admin-result-form");
       const inputs = form.querySelectorAll("input");
       const homeScore = Number(inputs[0].value);
       const awayScore = Number(inputs[1].value);
+
       await saveOfficialResult(matchId, homeScore, awayScore);
     });
   });
@@ -887,7 +972,6 @@ function renderAdminVisibility() {
   const isAdmin = !!state.userProfile?.isAdmin;
   const info = document.getElementById("admin-access-message");
   if (!info) return;
-
   info.style.display = isAdmin ? "none" : "block";
 }
 
@@ -901,7 +985,7 @@ function renderAll() {
 
 /* =========================================================
    ACTIONS USER
-   ========================================================= */
+========================================================= */
 async function submitPrediction(matchId, predHome, predAway) {
   try {
     if (!state.currentUser) {
@@ -909,7 +993,12 @@ async function submitPrediction(matchId, predHome, predAway) {
       return;
     }
 
-    if (!Number.isFinite(predHome) || !Number.isFinite(predAway) || predHome < 0 || predAway < 0) {
+    if (
+      !Number.isFinite(predHome) ||
+      !Number.isFinite(predAway) ||
+      predHome < 0 ||
+      predAway < 0
+    ) {
       alert("Merci de saisir deux scores valides.");
       return;
     }
@@ -925,7 +1014,9 @@ async function submitPrediction(matchId, predHome, predAway) {
       return;
     }
 
-    const existing = state.predictions.find((p) => p.matchId === matchId && p.userId === state.currentUser.uid);
+    const existing = state.predictions.find(
+      (p) => p.matchId === matchId && p.userId === state.currentUser.uid
+    );
 
     if (existing) {
       await updateDoc(doc(db, "predictions", existing.id), {
@@ -951,7 +1042,7 @@ async function submitPrediction(matchId, predHome, predAway) {
 
 /* =========================================================
    ACTIONS ADMIN
-   ========================================================= */
+========================================================= */
 function requireAdmin() {
   if (!state.userProfile?.isAdmin) {
     throw new Error("Accès réservé à l’administrateur.");
@@ -966,8 +1057,7 @@ async function createParticipantByAdmin(name, email, password) {
   }
 
   throw new Error(
-    "La création directe d’un compte participant depuis l’onglet admin n’est pas encore activée dans cette version. " +
-    "Pour l’instant, le participant doit créer son compte via le popup d’inscription."
+    "La création directe d’un compte participant depuis l’onglet admin n’est pas encore active dans cette version. Pour l’instant, le participant doit créer son compte via le popup d’inscription."
   );
 }
 
@@ -987,6 +1077,7 @@ async function createMatchByAdmin(payload) {
 
   if (WEEKLY_LIMITED_COMPETITIONS.has(competitionId)) {
     const targetWeek = weekKeyFromKickoff(kickoffDate);
+
     const conflict = state.matches.find((m) => {
       if (m.competitionId !== competitionId) return false;
       return weekKeyFromKickoff(m.kickoff) === targetWeek;
@@ -1011,7 +1102,12 @@ async function saveOfficialResult(matchId, homeScore, awayScore) {
   try {
     requireAdmin();
 
-    if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || homeScore < 0 || awayScore < 0) {
+    if (
+      !Number.isFinite(homeScore) ||
+      !Number.isFinite(awayScore) ||
+      homeScore < 0 ||
+      awayScore < 0
+    ) {
       alert("Merci de saisir deux scores valides.");
       return;
     }
@@ -1036,7 +1132,9 @@ async function deleteMatch(matchId) {
     await deleteDoc(doc(db, "matches", matchId));
 
     const linkedPredictions = state.predictions.filter((p) => p.matchId === matchId);
-    await Promise.all(linkedPredictions.map((pred) => deleteDoc(doc(db, "predictions", pred.id))));
+    await Promise.all(
+      linkedPredictions.map((pred) => deleteDoc(doc(db, "predictions", pred.id)))
+    );
   } catch (error) {
     alertError(error, "Impossible de supprimer le match.");
   }
@@ -1044,43 +1142,52 @@ async function deleteMatch(matchId) {
 
 /* =========================================================
    FORMULAIRES ADMIN
-   ========================================================= */
-dom.adminCreateUserForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  try {
-    await createParticipantByAdmin(
-      dom.createUserName.value.trim(),
-      dom.createUserEmail.value.trim(),
-      dom.createUserPassword.value.trim()
-    );
-    dom.adminCreateUserForm.reset();
-  } catch (error) {
-    alertError(error, "Impossible de créer le participant.");
-  }
-});
+========================================================= */
+function initAdminForms() {
+  dom.adminCreateUserForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-dom.adminCreateMatchForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
+    try {
+      await createParticipantByAdmin(
+        dom.createUserName.value.trim(),
+        dom.createUserEmail.value.trim(),
+        dom.createUserPassword.value.trim()
+      );
+      dom.adminCreateUserForm.reset();
+    } catch (error) {
+      alertError(error, "Impossible de créer le participant.");
+    }
+  });
 
-  try {
-    await createMatchByAdmin({
-      competitionId: dom.adminMatchCompetition.value,
-      roundLabel: dom.adminMatchRound.value.trim(),
-      homeTeam: dom.adminMatchHome.value.trim(),
-      awayTeam: dom.adminMatchAway.value.trim(),
-      kickoff: dom.adminMatchKickoff.value
-    });
+  dom.adminCreateMatchForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-    dom.adminCreateMatchForm.reset();
-  } catch (error) {
-    alertError(error, "Impossible d’ajouter le match.");
-  }
-});
+    try {
+      await createMatchByAdmin({
+        competitionId: dom.adminMatchCompetition.value,
+        roundLabel: dom.adminMatchRound.value.trim(),
+        homeTeam: dom.adminMatchHome.value.trim(),
+        awayTeam: dom.adminMatchAway.value.trim(),
+        kickoff: dom.adminMatchKickoff.value
+      });
+
+      dom.adminCreateMatchForm.reset();
+    } catch (error) {
+      alertError(error, "Impossible d’ajouter le match.");
+    }
+  });
+
+  dom.evolutionPlayerSelect?.addEventListener("change", drawEvolutionChart);
+}
 
 /* =========================================================
    INIT
-   ========================================================= */
+========================================================= */
 initTheme();
+initNavigation();
+initAuthUI();
+initAdminForms();
+initFirestoreSubscriptions();
 setView("general");
 computeDerivedData();
 renderAll();
